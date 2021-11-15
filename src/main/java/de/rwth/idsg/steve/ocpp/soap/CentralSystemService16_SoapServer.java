@@ -18,7 +18,7 @@
  */
 package de.rwth.idsg.steve.ocpp.soap;
 
-import com.fps.charging.AzureServiceBusAdapter;
+import com.fps.charging.adapter.AzureServiceBusTopicAdapter;
 import com.fps.charging.JsonUtils;
 import de.rwth.idsg.steve.ocpp.OcppProtocol;
 import de.rwth.idsg.steve.ocpp.OcppVersion;
@@ -71,7 +71,7 @@ import org.springframework.stereotype.Service;
 public class CentralSystemService16_SoapServer implements CentralSystemService {
 
     @Autowired
-    private AzureServiceBusAdapter azureServiceBusAdapter;
+    private AzureServiceBusTopicAdapter azureServiceBusTopicAdapter;
 
     @Autowired
     private CentralSystemService16_Service service;
@@ -148,7 +148,7 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     private void sendMessage(Object parameters) {
         String message = JsonUtils.toJson(parameters);
         log.warn("START -> "+parameters.getClass().getName()+" : "+message);
-        azureServiceBusAdapter.sendMessage(message);
+        azureServiceBusTopicAdapter.sendMessage(message);
 //        MessageSender.sendMessage(message);
         log.warn("END -> "+parameters.getClass().getName()+" : "+message);
     }

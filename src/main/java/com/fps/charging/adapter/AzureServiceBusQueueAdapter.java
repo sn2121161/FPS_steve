@@ -1,14 +1,16 @@
-package com.fps.charging;
+package com.fps.charging.adapter;
 
 import com.azure.messaging.servicebus.ServiceBusClientBuilder;
 import com.azure.messaging.servicebus.ServiceBusErrorContext;
 import com.azure.messaging.servicebus.ServiceBusException;
 import com.azure.messaging.servicebus.ServiceBusFailureReason;
-import com.azure.messaging.servicebus.ServiceBusMessage;
 import com.azure.messaging.servicebus.ServiceBusProcessorClient;
 import com.azure.messaging.servicebus.ServiceBusReceivedMessage;
 import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
 import com.azure.messaging.servicebus.ServiceBusSenderClient;
+import com.fps.charging.JsonUtils;
+import com.fps.charging.adapter.model.ChargingProfileRequest;
+import com.fps.charging.service.ChargingProfileService;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -17,20 +19,25 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AzureServiceBusAdapter {
+public class AzureServiceBusQueueAdapter {
 
-  static String connectionString = "Endpoint=sb://steve-to-fps.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Ig2l2323OvjTtL2Upf9sENuWyrwGEkeVxMHluJSt/MI=";
-  static String topicName = "steve-to-fps-topic";
-  static String subName = "steve-to-fps-topic-subscription";
+  static String queueConnectionString = "Endpoint=sb://steve-to-fps.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Ig2l2323OvjTtL2Upf9sENuWyrwGEkeVxMHluJSt/MI=";
+  static String queueName = "schedule-matcher";
 
   private ServiceBusSenderClient senderClient;
   private ServiceBusProcessorClient processorClient;
+  private ServiceBusProcessorClient queueProcessorClient;
+
+  private final ChargingProfileService chargingProfileService;
+
+  public AzureServiceBusQueueAdapter( ChargingProfileService chargingProfileService) {
+    this.chargingProfileService = chargingProfileService;
+  }
 
   @EventListener(ContextRefreshedEvent.class)
   public void start() throws InterruptedException {
     System.out.println("Starting azure Integration");
-    createSender();
-    createListener();
+    createQueueListener();
 
   }
 
@@ -38,39 +45,26 @@ public class AzureServiceBusAdapter {
   public void stop() throws InterruptedException {
     System.out.println("Stopping and closing the processor");
     processorClient.close();
-  }
-
-  private void createSender() {
-    // create the Service Bus Sender client for the queue
-    senderClient = new ServiceBusClientBuilder()
-        .connectionString(connectionString)
-        .sender()
-        .topicName(topicName)
-        .buildClient();
-  }
-
-  public void sendMessage(String message) {
-    // send one message to the topic
-    senderClient.sendMessage(new ServiceBusMessage(message));
-    System.out.println("Sent a single message to the topic: " + topicName);
+    queueProcessorClient.close();
   }
 
   // handles received messages
-  public void createListener() throws InterruptedException {
+  public void createQueueListener() throws InterruptedException {
     CountDownLatch countdownLatch = new CountDownLatch(1);
 
     // Create an instance of the processor through the ServiceBusClientBuilder
-    processorClient = new ServiceBusClientBuilder()
-        .connectionString(connectionString)
+    queueProcessorClient = new ServiceBusClientBuilder()
+        .connectionString(queueConnectionString)
         .processor()
-        .topicName(topicName)
-        .subscriptionName(subName)
+        .queueName(queueName)
         .processMessage(this::processMessage)
         .processError(context -> processError(context, countdownLatch))
         .buildProcessorClient();
 
     System.out.println("Starting the processor");
-    processorClient.start();
+    queueProcessorClient.start();
+
+
 
   }
 
@@ -79,6 +73,14 @@ public class AzureServiceBusAdapter {
     System.out.printf("Processing message. Session: %s, Sequence #: %s. Contents: %s%n",
         message.getMessageId(),
         message.getSequenceNumber(), message.getBody());
+
+    ChargingProfileRequest chargingProfileRequest = JsonUtils.toObject(message.getBody().toString(),
+        ChargingProfileRequest.class);
+
+    chargingProfileService.processChargingProfileMessage(chargingProfileRequest);
+
+
+
   }
 
   private void processError(ServiceBusErrorContext context, CountDownLatch countdownLatch) {
