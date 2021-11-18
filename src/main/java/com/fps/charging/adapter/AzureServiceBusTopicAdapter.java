@@ -13,6 +13,7 @@ import com.fps.charging.adapter.model.ChargingProfileRequest;
 import de.rwth.idsg.steve.repository.ChargingProfileRepository;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
@@ -20,6 +21,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class AzureServiceBusTopicAdapter {
 
   static String topicConnectionString = "Endpoint=sb://steve-to-fps.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Ig2l2323OvjTtL2Upf9sENuWyrwGEkeVxMHluJSt/MI=";
@@ -35,8 +37,8 @@ public class AzureServiceBusTopicAdapter {
   @EventListener(ContextRefreshedEvent.class)
   public void start() throws InterruptedException {
     System.out.println("Starting azure Integration");
-//    createSender();
-//    createTopicListener();
+    createSender();
+    createTopicListener();
   }
 
   @EventListener(ContextStoppedEvent.class)
@@ -57,7 +59,11 @@ public class AzureServiceBusTopicAdapter {
 
   public void sendMessage(String message) {
     // send one message to the topic
-    senderClient.sendMessage(new ServiceBusMessage(message));
+    try {
+      senderClient.sendMessage(new ServiceBusMessage(message));
+    } catch (Exception e) {
+      log.error("Error while sending message to serviceBusTopic. ",e);
+    }
     System.out.println("Sent a single message to the topic: " + topicName);
   }
 

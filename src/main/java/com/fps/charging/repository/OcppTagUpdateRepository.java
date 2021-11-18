@@ -18,7 +18,6 @@
  */
 package com.fps.charging.repository;
 
-import jooq.steve.db.tables.OcppTag;
 import jooq.steve.db.tables.records.OcppTagRecord;
 
 public interface OcppTagUpdateRepository {
