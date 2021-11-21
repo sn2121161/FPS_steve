@@ -1,0 +1,32 @@
+{
+  "idTag": "ABCDEF01020304",
+  "chargingProfile": {
+    "stackLevel": 5,
+    "chargingProfilePurpose": "TxProfile",
+    "chargingProfileKind": "Absolute",
+    "recurrencyKind": null,
+    "chargingSchedule": {
+      "duration": 20000,
+      "startSchedule": "2021-11-18T10:15:30",
+      "chargingRateUnit": "A",
+      "chargingSchedulePeriod": [
+        {
+          "startPeriod": 0,
+          "limit": 20.0,
+          "numberPhases": 1
+        },
+        {
+          "startPeriod": 100,
+          "limit": 32.0,
+          "numberPhases": 1
+        },
+        {
+          "startPeriod": 200,
+          "limit": 64.0,
+          "numberPhases": 1
+        }
+      ],
+      "minChargingRate": 3.0
+    }
+  }
+}

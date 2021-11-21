@@ -9,12 +9,9 @@ import com.azure.messaging.servicebus.ServiceBusProcessorClient;
 import com.azure.messaging.servicebus.ServiceBusReceivedMessage;
 import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
 import com.azure.messaging.servicebus.ServiceBusSenderClient;
-import com.fps.charging.adapter.model.ChargingProfileRequest;
-import de.rwth.idsg.steve.repository.ChargingProfileRepository;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.context.event.EventListener;
@@ -31,7 +28,6 @@ public class AzureServiceBusTopicAdapter {
   private ServiceBusSenderClient senderClient;
   private ServiceBusProcessorClient processorClient;
   private ServiceBusProcessorClient queueProcessorClient;
-
 
 
   @EventListener(ContextRefreshedEvent.class)
@@ -61,10 +57,11 @@ public class AzureServiceBusTopicAdapter {
     // send one message to the topic
     try {
       senderClient.sendMessage(new ServiceBusMessage(message));
+      log.info("Sent a single message to the topic: {} ", topicName);
     } catch (Exception e) {
-      log.error("Error while sending message to serviceBusTopic. ",e);
+      // todo send error message to a queue
+      log.error("Error while sending message to serviceBusTopic. ", e);
     }
-    System.out.println("Sent a single message to the topic: " + topicName);
   }
 
   // handles received messages

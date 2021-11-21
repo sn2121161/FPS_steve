@@ -18,8 +18,8 @@
  */
 package de.rwth.idsg.steve.ocpp.soap;
 
-import com.fps.charging.adapter.AzureServiceBusTopicAdapter;
 import com.fps.charging.JsonUtils;
+import com.fps.charging.service.MessageSender;
 import de.rwth.idsg.steve.ocpp.OcppProtocol;
 import de.rwth.idsg.steve.ocpp.OcppVersion;
 import de.rwth.idsg.steve.service.CentralSystemService16_Service;
@@ -71,7 +71,7 @@ import org.springframework.stereotype.Service;
 public class CentralSystemService16_SoapServer implements CentralSystemService {
 
     @Autowired
-    private AzureServiceBusTopicAdapter azureServiceBusTopicAdapter;
+    private MessageSender messageSender;
 
     @Autowired
     private CentralSystemService16_Service service;
@@ -98,59 +98,64 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     @Override
     public StatusNotificationResponse statusNotification(StatusNotificationRequest parameters,
                                                          String chargeBoxIdentity) {
-        sendMessage(parameters);
-        return service.statusNotification(parameters, chargeBoxIdentity);
+
+      StatusNotificationResponse statusNotificationResponse = service.statusNotification(parameters,
+          chargeBoxIdentity);
+      sendMessage(parameters);
+      return statusNotificationResponse;
     }
 
     @Override
     public MeterValuesResponse meterValues(MeterValuesRequest parameters, String chargeBoxIdentity) {
-        sendMessage(parameters);
-        return service.meterValues(parameters, chargeBoxIdentity);
+      MeterValuesResponse meterValuesResponse = service.meterValues(parameters, chargeBoxIdentity);
+      sendMessage(parameters);
+      return meterValuesResponse;
     }
 
     @Override
     public DiagnosticsStatusNotificationResponse diagnosticsStatusNotification(
             DiagnosticsStatusNotificationRequest parameters, String chargeBoxIdentity) {
-        sendMessage(parameters);
         return service.diagnosticsStatusNotification(parameters, chargeBoxIdentity);
     }
 
     @Override
     public StartTransactionResponse startTransaction(StartTransactionRequest parameters, String chargeBoxIdentity) {
-        sendMessage(parameters);
-        return service.startTransaction(parameters, chargeBoxIdentity);
+      StartTransactionResponse startTransactionResponse = service.startTransaction(parameters,
+          chargeBoxIdentity);
+      sendMessage(parameters);
+      return startTransactionResponse;
     }
 
     @Override
     public StopTransactionResponse stopTransaction(StopTransactionRequest parameters, String chargeBoxIdentity) {
-        sendMessage(parameters);
-        return service.stopTransaction(parameters, chargeBoxIdentity);
+      StopTransactionResponse stopTransactionResponse = service.stopTransaction(parameters,
+          chargeBoxIdentity);
+      sendMessage(parameters);
+      return stopTransactionResponse;
     }
 
     @Override
     public HeartbeatResponse heartbeat(HeartbeatRequest parameters, String chargeBoxIdentity) {
-        sendMessage(parameters);
-        return service.heartbeat(parameters, chargeBoxIdentity);
+      HeartbeatResponse heartbeat = service.heartbeat(parameters, chargeBoxIdentity);
+      sendMessage(parameters);
+      return heartbeat;
     }
 
     @Override
     public AuthorizeResponse authorize(AuthorizeRequest parameters, String chargeBoxIdentity) {
-        sendMessage(parameters);
         return service.authorize(parameters, chargeBoxIdentity);
     }
 
     @Override
     public DataTransferResponse dataTransfer(DataTransferRequest parameters, String chargeBoxIdentity) {
-        sendMessage(parameters);
         return service.dataTransfer(parameters, chargeBoxIdentity);
     }
 
     private void sendMessage(Object parameters) {
         String message = JsonUtils.toJson(parameters);
-        log.warn("START -> "+parameters.getClass().getName()+" : "+message);
-        azureServiceBusTopicAdapter.sendMessage(message);
-//        MessageSender.sendMessage(message);
-        log.warn("END -> "+parameters.getClass().getName()+" : "+message);
+        log.info("Sending Ocpp Message to FPS back office : {} ", message);
+        messageSender.sendMessage(message);;
+        log.info("Sent Ocpp Message to FPS back office : {} ", message);
     }
 
     // -------------------------------------------------------------------------

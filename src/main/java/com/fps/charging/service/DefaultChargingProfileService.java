@@ -39,5 +39,9 @@ public class DefaultChargingProfileService implements ChargingProfileService {
     ocppTagUpdateRepository.updateOcppTagWithChargingProfile(ocppTag.getIdTag(),
         chargingProfileId);
 
+
+
+
+
   }
 }
