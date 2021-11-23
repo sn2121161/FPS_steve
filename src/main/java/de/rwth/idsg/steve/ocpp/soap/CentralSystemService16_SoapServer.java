@@ -18,7 +18,15 @@
  */
 package de.rwth.idsg.steve.ocpp.soap;
 
+import static com.fps.charging.adapter.model.OccpMessageType.HEARTBEAT;
+import static com.fps.charging.adapter.model.OccpMessageType.METER_VALUES;
+import static com.fps.charging.adapter.model.OccpMessageType.START_TRANSACTION;
+import static com.fps.charging.adapter.model.OccpMessageType.STATUS_NOTIFICATION;
+import static com.fps.charging.adapter.model.OccpMessageType.STOP_TRANSACTION;
+
 import com.fps.charging.JsonUtils;
+import com.fps.charging.adapter.model.OccpMessageType;
+import com.fps.charging.adapter.model.OcppMessage;
 import com.fps.charging.service.MessageSender;
 import de.rwth.idsg.steve.ocpp.OcppProtocol;
 import de.rwth.idsg.steve.ocpp.OcppVersion;
@@ -101,14 +109,14 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
 
       StatusNotificationResponse statusNotificationResponse = service.statusNotification(parameters,
           chargeBoxIdentity);
-      sendMessage(parameters);
+      sendMessage(parameters, chargeBoxIdentity, STATUS_NOTIFICATION);
       return statusNotificationResponse;
     }
 
     @Override
     public MeterValuesResponse meterValues(MeterValuesRequest parameters, String chargeBoxIdentity) {
       MeterValuesResponse meterValuesResponse = service.meterValues(parameters, chargeBoxIdentity);
-      sendMessage(parameters);
+      sendMessage(parameters, chargeBoxIdentity,METER_VALUES);
       return meterValuesResponse;
     }
 
@@ -122,7 +130,7 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     public StartTransactionResponse startTransaction(StartTransactionRequest parameters, String chargeBoxIdentity) {
       StartTransactionResponse startTransactionResponse = service.startTransaction(parameters,
           chargeBoxIdentity);
-      sendMessage(parameters);
+      sendMessage(parameters, chargeBoxIdentity, START_TRANSACTION);
       return startTransactionResponse;
     }
 
@@ -130,14 +138,14 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     public StopTransactionResponse stopTransaction(StopTransactionRequest parameters, String chargeBoxIdentity) {
       StopTransactionResponse stopTransactionResponse = service.stopTransaction(parameters,
           chargeBoxIdentity);
-      sendMessage(parameters);
+      sendMessage(parameters, chargeBoxIdentity,STOP_TRANSACTION);
       return stopTransactionResponse;
     }
 
     @Override
     public HeartbeatResponse heartbeat(HeartbeatRequest parameters, String chargeBoxIdentity) {
       HeartbeatResponse heartbeat = service.heartbeat(parameters, chargeBoxIdentity);
-      sendMessage(parameters);
+      sendMessage(parameters, chargeBoxIdentity, HEARTBEAT);
       return heartbeat;
     }
 
@@ -151,8 +159,13 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
         return service.dataTransfer(parameters, chargeBoxIdentity);
     }
 
-    private void sendMessage(Object parameters) {
-        String message = JsonUtils.toJson(parameters);
+    private void sendMessage(Object parameters, String chargeBoxId, OccpMessageType occpMessageType) {
+        String message = JsonUtils.toJson(OcppMessage.builder()
+            .chargeBoxId(chargeBoxId)
+            .occpMessageType(occpMessageType)
+            .body(parameters)
+            .build());
+
         log.info("Sending Ocpp Message to FPS back office : {} ", message);
         messageSender.sendMessage(message);;
         log.info("Sent Ocpp Message to FPS back office : {} ", message);

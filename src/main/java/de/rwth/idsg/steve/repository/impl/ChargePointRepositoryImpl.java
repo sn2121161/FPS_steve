@@ -23,6 +23,7 @@ import de.rwth.idsg.steve.ocpp.OcppProtocol;
 import de.rwth.idsg.steve.repository.AddressRepository;
 import de.rwth.idsg.steve.repository.ChargePointRepository;
 import de.rwth.idsg.steve.repository.dto.ChargePoint;
+import de.rwth.idsg.steve.repository.dto.ChargePoint.Details;
 import de.rwth.idsg.steve.repository.dto.ChargePointSelect;
 import de.rwth.idsg.steve.repository.dto.ConnectorStatus;
 import de.rwth.idsg.steve.utils.DateTimeUtils;
@@ -189,6 +190,21 @@ public class ChargePointRepositoryImpl implements ChargePointRepository {
         ChargeBoxRecord cbr = ctx.selectFrom(CHARGE_BOX)
                                  .where(CHARGE_BOX.CHARGE_BOX_PK.equal(chargeBoxPk))
                                  .fetchOne();
+
+        if (cbr == null) {
+            throw new SteveException("Charge point not found");
+        }
+
+        AddressRecord ar = addressRepository.get(ctx, cbr.getAddressPk());
+
+        return new ChargePoint.Details(cbr, ar);
+    }
+
+    @Override
+    public Details getByChargeBoxId(String chargeBoxId) {
+        ChargeBoxRecord cbr = ctx.selectFrom(CHARGE_BOX)
+            .where(CHARGE_BOX.CHARGE_BOX_ID.equal(chargeBoxId))
+            .fetchOne();
 
         if (cbr == null) {
             throw new SteveException("Charge point not found");

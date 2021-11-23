@@ -43,6 +43,7 @@ public interface ChargePointRepository {
 
     List<ChargePoint.Overview> getOverview(ChargePointQueryForm form);
     ChargePoint.Details getDetails(int chargeBoxPk);
+    ChargePoint.Details getByChargeBoxId(String chargeBoxId);
 
     default List<ConnectorStatus> getChargePointConnectorStatus() {
         return getChargePointConnectorStatus(null);
