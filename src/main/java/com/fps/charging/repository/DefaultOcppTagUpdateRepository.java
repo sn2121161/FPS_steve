@@ -58,6 +58,19 @@ public class DefaultOcppTagUpdateRepository implements OcppTagUpdateRepository {
   }
 
   @Override
+  public void updateOcppTagWithChargingBoxId(String ocppTag, String chargingBoxId) {
+    try {
+      ctx.update(OCPP_TAG)
+          .set(OCPP_TAG.CHARGE_BOX_ID, chargingBoxId)
+          .where(OCPP_TAG.ID_TAG.equal(ocppTag))
+          .execute();
+    } catch (DataAccessException e) {
+      throw new SteveException(
+          "Execution of updateOcppTagWithChargingBoxId for idTag '%s' FAILED.", ocppTag, e);
+    }
+  }
+
+  @Override
   public OcppTagRecord findByOcppTag(String ocppTag) {
     try {
       return ctx.selectFrom(OCPP_TAG)

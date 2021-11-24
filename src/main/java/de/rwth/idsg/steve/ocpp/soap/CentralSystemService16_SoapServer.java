@@ -27,6 +27,7 @@ import static com.fps.charging.adapter.model.OccpMessageType.STOP_TRANSACTION;
 import com.fps.charging.JsonUtils;
 import com.fps.charging.adapter.model.OccpMessageType;
 import com.fps.charging.adapter.model.OcppMessage;
+import com.fps.charging.listener.AuthorizationListener;
 import com.fps.charging.service.MessageSender;
 import de.rwth.idsg.steve.ocpp.OcppProtocol;
 import de.rwth.idsg.steve.ocpp.OcppVersion;
@@ -61,6 +62,7 @@ import ocpp.cs._2015._10.StatusNotificationResponse;
 import ocpp.cs._2015._10.StopTransactionRequest;
 import ocpp.cs._2015._10.StopTransactionResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.config.web.servlet.oauth2.client.OAuth2ClientSecurityMarker;
 import org.springframework.stereotype.Service;
 
 /**
@@ -83,6 +85,9 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
 
     @Autowired
     private CentralSystemService16_Service service;
+
+    @Autowired
+    private AuthorizationListener authorizationListener;
 
     public BootNotificationResponse bootNotificationWithTransport(BootNotificationRequest parameters,
                                                                   String chargeBoxIdentity, OcppProtocol protocol) {
@@ -151,7 +156,9 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
 
     @Override
     public AuthorizeResponse authorize(AuthorizeRequest parameters, String chargeBoxIdentity) {
-        return service.authorize(parameters, chargeBoxIdentity);
+        AuthorizeResponse authorizeResponse = service.authorize(parameters, chargeBoxIdentity);
+        authorizationListener.process(parameters,chargeBoxIdentity,authorizeResponse);
+        return authorizeResponse;
     }
 
     @Override
