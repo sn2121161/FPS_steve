@@ -4,7 +4,7 @@ import com.fps.charging.adapter.mapper.ChargingProfileMapper;
 import com.fps.charging.adapter.model.ChargingProfileRequest;
 import com.fps.charging.repository.OcppTagUpdateRepository;
 import de.rwth.idsg.steve.SteveException;
-import de.rwth.idsg.steve.ocpp.OcppTransport;
+import de.rwth.idsg.steve.ocpp.OcppProtocol;
 import de.rwth.idsg.steve.repository.ChargePointRepository;
 import de.rwth.idsg.steve.repository.ChargingProfileRepository;
 import de.rwth.idsg.steve.repository.OcppTagRepository;
@@ -60,17 +60,18 @@ public class DefaultChargingProfileService implements ChargingProfileService {
 
     Details chargeBoxDetail = chargePointRepository.getByChargeBoxId(ocppTag.getChargeBoxId());
 
+    OcppProtocol protocol = OcppProtocol.fromCompositeValue(
+        chargeBoxDetail.getChargeBox().getOcppProtocol());
+
     List<ChargePointSelect> chargePointSelectList = new ArrayList<>();
-    chargePointSelectList.add(new ChargePointSelect(OcppTransport.SOAP,
+    chargePointSelectList.add(new ChargePointSelect(protocol.getTransport(),
         chargeBoxDetail.getChargeBox().getChargeBoxId(),
         chargeBoxDetail.getChargeBox().getEndpointAddress()));
     chargingProfileParams.setChargePointSelectList(chargePointSelectList);
 
     client16.setChargingProfile(chargingProfileParams);
 
-
     log.info("SUCCESSFULLY SENT CHARGING PROFILE: {} ", chargingProfileParams);
-
   }
 
   private void processDbOperations(ChargingProfileRequest chargingProfileRequest) {
