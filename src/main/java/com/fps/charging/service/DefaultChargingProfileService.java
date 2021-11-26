@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -39,26 +40,40 @@ public class DefaultChargingProfileService implements ChargingProfileService {
 
   @Override
   public void processChargingProfileMessage(ChargingProfileRequest chargingProfileRequest) {
+    log.info(
+        "Processing new charging profile message coming from FPS back office, idTag={}, chargingProfileId={}",
+        chargingProfileRequest.getIdTag(), chargingProfileRequest.getChargingProfile());
 
     processDbOperations(chargingProfileRequest);
-
-    applyChargingProfile(chargingProfileRequest);
-
-
+    applyChargingProfile(chargingProfileRequest.getIdTag());
   }
 
-  private void applyChargingProfile(ChargingProfileRequest chargingProfileRequest) {
+  public void applyChargingProfile(String idTag) {
+    OcppTagRecord ocppTag = ocppTagUpdateRepository.findByOcppTag(idTag);
 
-    OcppTagRecord ocppTag = ocppTagUpdateRepository.findByOcppTag(
-        chargingProfileRequest.getIdTag());
+    if (ocppTag == null) {
+      throw new SteveException(
+          "No ocpp_tag record is present for idTag=" + idTag);
+    }
 
-//    chargePointRepository.getDetails()
+    if (!isReadyforApplyChargingProfile(ocppTag)) {
+      throw new SteveException(
+          "Not suitable for apply charging profile. All of the fields "
+              + "(ChargeBoxId,ChargingProfileId,ConnectorId) should be set for occpp_tag "
+              + "record for idTag:"
+              + idTag);
+    }
 
     SetChargingProfileParams chargingProfileParams = new SetChargingProfileParams();
     chargingProfileParams.setChargingProfilePk(ocppTag.getChargingProfileId());
     chargingProfileParams.setConnectorId(ocppTag.getConnectorId());
 
     Details chargeBoxDetail = chargePointRepository.getByChargeBoxId(ocppTag.getChargeBoxId());
+
+    if (chargeBoxDetail == null) {
+      throw new SteveException(
+          "No charge_box record is present for ChargeBoxId=" + ocppTag.getChargeBoxId());
+    }
 
     OcppProtocol protocol = OcppProtocol.fromCompositeValue(
         chargeBoxDetail.getChargeBox().getOcppProtocol());
@@ -72,6 +87,12 @@ public class DefaultChargingProfileService implements ChargingProfileService {
     client16.setChargingProfile(chargingProfileParams);
 
     log.info("SUCCESSFULLY SENT CHARGING PROFILE: {} ", chargingProfileParams);
+  }
+
+  private boolean isReadyforApplyChargingProfile(OcppTagRecord ocppTag) {
+    return StringUtils.hasText(ocppTag.getChargeBoxId())
+        && ocppTag.getConnectorId() != null
+        && ocppTag.getChargingProfileId() != null;
   }
 
   private void processDbOperations(ChargingProfileRequest chargingProfileRequest) {

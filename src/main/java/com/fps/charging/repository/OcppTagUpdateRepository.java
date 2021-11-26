@@ -24,7 +24,7 @@ public interface OcppTagUpdateRepository {
 
   void updateOcppTagWithChargingProfile(String ocppTag, Integer chargingProfileId);
 
-  void updateOcppTagWithChargingBoxId(String ocppTag, String chargingBoxId);
+  void updateOcppTagWithChargingBoxIdAndConnectorId(String ocppTag, String chargingBoxId,Integer connectorId);
 
   OcppTagRecord findByOcppTag(String ocppTag);
 }

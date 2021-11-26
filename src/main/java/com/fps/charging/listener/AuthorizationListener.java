@@ -28,8 +28,8 @@ public class AuthorizationListener {
           log.error("No ocpp_tag record is present for idTag={}", parameters.getIdTag());
           return;
         }
-        ocppTagUpdateRepository.updateOcppTagWithChargingBoxId(ocppTag.getIdTag(),
-            chargeBoxIdentity);
+        ocppTagUpdateRepository.updateOcppTagWithChargingBoxIdAndConnectorId(ocppTag.getIdTag(),
+            chargeBoxIdentity,1);
       }
     } catch (Exception e) {
       log.error(

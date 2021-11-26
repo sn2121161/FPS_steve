@@ -6,4 +6,5 @@ public interface ChargingProfileService {
 
   void processChargingProfileMessage(ChargingProfileRequest chargingProfileRequest);
 
+  void applyChargingProfile(String idTag);
 }

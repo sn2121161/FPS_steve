@@ -58,10 +58,11 @@ public class DefaultOcppTagUpdateRepository implements OcppTagUpdateRepository {
   }
 
   @Override
-  public void updateOcppTagWithChargingBoxId(String ocppTag, String chargingBoxId) {
+  public void updateOcppTagWithChargingBoxIdAndConnectorId(String ocppTag, String chargingBoxId, Integer connectorId) {
     try {
       ctx.update(OCPP_TAG)
           .set(OCPP_TAG.CHARGE_BOX_ID, chargingBoxId)
+          .set(OCPP_TAG.CONNECTOR_ID, connectorId)
           .where(OCPP_TAG.ID_TAG.equal(ocppTag))
           .execute();
     } catch (DataAccessException e) {
