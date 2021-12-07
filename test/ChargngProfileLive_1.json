@@ -6,29 +6,33 @@
     "chargingProfileKind": "Absolute",
     "recurrencyKind": null,
     "chargingSchedule": {
-      "duration": 400,
-      "startSchedule": "2021-11-30T13:19:00",
+      "duration": 1000,
+      "startSchedule": "2021-11-30T15:53:00",
       "chargingRateUnit": "A",
       "chargingSchedulePeriod": [
         {
           "startPeriod": 0,
-          "limit": 10.0,
+          "limit": 20.0,
           "numberPhases": 1
         },
         {
           "startPeriod": 100,
-          "limit": 15.0,
+          "limit": 10.0,
           "numberPhases": 1
         },
         {
           "startPeriod": 200,
+          "limit": 15.0,
+          "numberPhases": 1
+        },
+        {
+          "startPeriod": 500,
           "limit": 20.0,
           "numberPhases": 1
         }
+
       ],
       "minChargingRate": 6.0
     }
   }
 }
-
-
