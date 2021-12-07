@@ -1,3 +1,21 @@
+/*
+ * SteVe - SteckdosenVerwaltung - https://github.com/RWTH-i5-IDSG/steve
+ * Copyright (C) 2013-2021 RWTH Aachen University - Information Systems - Intelligent Distributed Systems Group (IDSG).
+ * All Rights Reserved.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package com.fps.charging.adapter;
 
 import com.azure.messaging.servicebus.ServiceBusClientBuilder;
@@ -13,16 +31,18 @@ import com.fps.charging.adapter.model.ChargingProfileRequest;
 import com.fps.charging.service.ChargingProfileService;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class AzureServiceBusQueueAdapter {
 
   static String queueConnectionString = "Endpoint=sb://steve-to-fps.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Ig2l2323OvjTtL2Upf9sENuWyrwGEkeVxMHluJSt/MI=";
-  static String queueName = "schedule-matcher";
+  static String queueName = "schedule-matcher-local";
 
   private ServiceBusSenderClient senderClient;
   private ServiceBusProcessorClient processorClient;
@@ -30,7 +50,7 @@ public class AzureServiceBusQueueAdapter {
 
   private final ChargingProfileService chargingProfileService;
 
-  public AzureServiceBusQueueAdapter( ChargingProfileService chargingProfileService) {
+  public AzureServiceBusQueueAdapter(ChargingProfileService chargingProfileService) {
     this.chargingProfileService = chargingProfileService;
   }
 
@@ -65,7 +85,6 @@ public class AzureServiceBusQueueAdapter {
     queueProcessorClient.start();
 
 
-
   }
 
   private void processMessage(ServiceBusReceivedMessageContext context) {
@@ -74,12 +93,18 @@ public class AzureServiceBusQueueAdapter {
         message.getMessageId(),
         message.getSequenceNumber(), message.getBody());
 
+    log.info("Processing message. Session: {}, Sequence #: {}. Contents: {}%n",
+        message.getMessageId(), message.getSequenceNumber(), message.getBody());
+
     ChargingProfileRequest chargingProfileRequest = JsonUtils.toObject(message.getBody().toString(),
         ChargingProfileRequest.class);
 
-    chargingProfileService.processChargingProfileMessage(chargingProfileRequest);
-
-
+    try {
+      chargingProfileService.processChargingProfileMessage(chargingProfileRequest);
+    } catch (Exception e) {
+      log.error("Unable to process new charging profile coming from FPS. Message:{}",
+          message.getBody(), e);
+    }
 
   }
 
