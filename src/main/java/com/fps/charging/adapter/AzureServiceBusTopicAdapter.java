@@ -1,3 +1,21 @@
+/*
+ * SteVe - SteckdosenVerwaltung - https://github.com/RWTH-i5-IDSG/steve
+ * Copyright (C) 2013-2021 RWTH Aachen University - Information Systems - Intelligent Distributed Systems Group (IDSG).
+ * All Rights Reserved.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package com.fps.charging.adapter;
 
 import com.azure.messaging.servicebus.ServiceBusClientBuilder;
@@ -9,21 +27,27 @@ import com.azure.messaging.servicebus.ServiceBusProcessorClient;
 import com.azure.messaging.servicebus.ServiceBusReceivedMessage;
 import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
 import com.azure.messaging.servicebus.ServiceBusSenderClient;
+import com.fps.charging.security.AzureKeyVaultAdapter;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AzureServiceBusTopicAdapter {
 
-  static String topicConnectionString = "Endpoint=sb://steve-to-fps.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Ig2l2323OvjTtL2Upf9sENuWyrwGEkeVxMHluJSt/MI=";
-  static String topicName = "steve-to-fps-topic";
-  static String topicSubscriptionName = "steve-to-fps-topic-subscription";
+//  static String topicConnectionString = "Endpoint=sb://steve-to-fps.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Ig2l2323OvjTtL2Upf9sENuWyrwGEkeVxMHluJSt/MI=";
+//  static String topicName = "steve-to-fps-topic-local";
+//  static String topicSubscriptionName = "steve-to-fpsSubsLocal";
+
+  private final AzureKeyVaultAdapter azureKeyVaultAdapter;
 
   private ServiceBusSenderClient senderClient;
   private ServiceBusProcessorClient processorClient;
@@ -31,8 +55,9 @@ public class AzureServiceBusTopicAdapter {
 
 
   @EventListener(ContextRefreshedEvent.class)
+  @Order(2)
   public void start() throws InterruptedException {
-    System.out.println("Starting azure Integration");
+    System.out.println("Starting azure Integration Topic Adapter");
     createSender();
     createTopicListener();
   }
@@ -47,9 +72,9 @@ public class AzureServiceBusTopicAdapter {
   private void createSender() {
     // create the Service Bus Sender client for the queue
     senderClient = new ServiceBusClientBuilder()
-        .connectionString(topicConnectionString)
+        .connectionString(azureKeyVaultAdapter.getTopicConnectionString())
         .sender()
-        .topicName(topicName)
+        .topicName(azureKeyVaultAdapter.getTopicName())
         .buildClient();
   }
 
@@ -57,7 +82,7 @@ public class AzureServiceBusTopicAdapter {
     // send one message to the topic
     try {
       senderClient.sendMessage(new ServiceBusMessage(message));
-      log.info("Sent a single message to the topic: {} ", topicName);
+      log.info("Sent a single message to the topic: {} ", azureKeyVaultAdapter.getTopicName());
     } catch (Exception e) {
       // todo send error message to a queue
       log.error("Error while sending message to serviceBusTopic. ", e);
@@ -70,16 +95,17 @@ public class AzureServiceBusTopicAdapter {
 
     // Create an instance of the processor through the ServiceBusClientBuilder
     processorClient = new ServiceBusClientBuilder()
-        .connectionString(topicConnectionString)
+        .connectionString(azureKeyVaultAdapter.getTopicConnectionString())
         .processor()
-        .topicName(topicName)
-        .subscriptionName(topicSubscriptionName)
+        .topicName(azureKeyVaultAdapter.getTopicName())
+        .subscriptionName(azureKeyVaultAdapter.getTopicSubscriptionName())
         .processMessage(this::processMessage)
         .processError(context -> processError(context, countdownLatch))
         .buildProcessorClient();
 
-    System.out.println("Starting the processor");
+    System.out.println("Starting the processor -> Topic Adapter");
     processorClient.start();
+    System.out.println("Started the processor -> Topic Adapter");
 
   }
 
