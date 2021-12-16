@@ -18,7 +18,11 @@
  */
 package de.rwth.idsg.steve.config;
 
+import static de.rwth.idsg.steve.SteveConfiguration.CONFIG;
+
+import com.fps.charging.security.AzureKeyVaultAdapter;
 import de.rwth.idsg.steve.SteveProdCondition;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -30,8 +34,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 
-import static de.rwth.idsg.steve.SteveConfiguration.CONFIG;
-
 /**
  * @author Sevket Goekay <goekay@dbis.rwth-aachen.de>
  * @since 07.01.2015
@@ -39,7 +41,15 @@ import static de.rwth.idsg.steve.SteveConfiguration.CONFIG;
 @Configuration
 @EnableWebSecurity
 @Conditional(SteveProdCondition.class)
+@RequiredArgsConstructor
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+
+  /**
+   * Used to get the username and password from Azure Key Vault
+   *
+   */
+    private final AzureKeyVaultAdapter azureKeyVaultAdapter;
 
     /**
      * Password encoding changed with spring-security 5.0.0. We either have to use a prefix before the password to
@@ -53,7 +63,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         auth.inMemoryAuthentication()
             .passwordEncoder(CONFIG.getAuth().getPasswordEncoder())
             .withUser(CONFIG.getAuth().getUserName())
-            .password(CONFIG.getAuth().getEncodedPassword())
+            // password is coming from Azure Key Vault
+            .password(CONFIG.getAuth().getPasswordEncoder().encode(azureKeyVaultAdapter.getAdminPassword()))
             .roles("ADMIN");
     }
 

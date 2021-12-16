@@ -59,7 +59,7 @@ public class AzureServiceBusTopicAdapter {
   public void start() throws InterruptedException {
     System.out.println("Starting azure Integration Topic Adapter");
     createSender();
-    createTopicListener();
+    createTopicListener(); // todo: remove in prod
   }
 
   @EventListener(ContextStoppedEvent.class)
