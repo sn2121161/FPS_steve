@@ -43,16 +43,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AzureServiceBusTopicAdapter {
 
-//  static String topicConnectionString = "Endpoint=sb://steve-to-fps.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Ig2l2323OvjTtL2Upf9sENuWyrwGEkeVxMHluJSt/MI=";
-//  static String topicName = "steve-to-fps-topic-local";
-//  static String topicSubscriptionName = "steve-to-fpsSubsLocal";
-
+  // Used to get the queue connection information from Azure Key Vault
   private final AzureKeyVaultAdapter azureKeyVaultAdapter;
 
+  // Used to send message to Azure Service Topic
   private ServiceBusSenderClient senderClient;
-  private ServiceBusProcessorClient processorClient;
-  private ServiceBusProcessorClient queueProcessorClient;
 
+  // Used to connect Azure Service Topic to consume and process new charging profile messages created vy FPS adapter
+  private ServiceBusProcessorClient processorClient;
 
   @EventListener(ContextRefreshedEvent.class)
   @Order(2)
@@ -66,7 +64,6 @@ public class AzureServiceBusTopicAdapter {
   public void stop() throws InterruptedException {
     System.out.println("Stopping and closing the processor");
     processorClient.close();
-    queueProcessorClient.close();
   }
 
   private void createSender() {

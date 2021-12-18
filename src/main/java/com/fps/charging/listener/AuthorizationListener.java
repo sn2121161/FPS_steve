@@ -27,6 +27,12 @@ import ocpp.cs._2015._10.AuthorizeRequest;
 import ocpp.cs._2015._10.AuthorizeResponse;
 import org.springframework.stereotype.Service;
 
+/**
+ * This class is used to intercept Authorization request coming from charger and map vehicle RFID tag with charging box id
+ *
+ * @author Mehmet Dongel <mehmet.dongel@gmail.com>
+ * @since 10.11.2021
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

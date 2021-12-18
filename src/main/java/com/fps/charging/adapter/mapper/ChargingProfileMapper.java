@@ -35,6 +35,7 @@ import org.joda.time.LocalDateTime;
 
 public class ChargingProfileMapper {
 
+  // THis method converts FPS charging profile message to SteVe format
   public static ChargingProfileForm toChargingProfile(
       ChargingProfileRequest chargingProfileRequest) {
 
@@ -50,11 +51,11 @@ public class ChargingProfileMapper {
         ChargingProfileKindType.fromValue(chargingProfile.getChargingProfileKind()));
     form.setRecurrencyKind(chargingProfile.getRecurrencyKind() == null ? null
         : RecurrencyKindType.fromValue(chargingProfile.getRecurrencyKind()));
-//    form.setValidFrom(DateTimeUtils.toLocalDateTime(profile.getValidFrom()));
-//    form.setValidTo(DateTimeUtils.toLocalDateTime(profile.getValidTo()));
     form.setDurationInSeconds(chargingProfile.getChargingSchedule().getDuration());
-    form.setStartSchedule( new LocalDateTime(chargingProfile.getChargingSchedule().getStartSchedule()));
-    form.setChargingRateUnit(ChargingRateUnitType.fromValue(chargingProfile.getChargingSchedule().getChargingRateUnit()));
+    form.setStartSchedule(
+        new LocalDateTime(chargingProfile.getChargingSchedule().getStartSchedule()));
+    form.setChargingRateUnit(ChargingRateUnitType.fromValue(
+        chargingProfile.getChargingSchedule().getChargingRateUnit()));
     form.setMinChargingRate(chargingProfile.getChargingSchedule().getMinChargingRate());
 
     Map<String, SchedulePeriod> periodMap = new LinkedHashMap<>();

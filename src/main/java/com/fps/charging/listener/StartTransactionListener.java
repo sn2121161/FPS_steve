@@ -27,6 +27,12 @@ import ocpp.cs._2015._10.StartTransactionRequest;
 import ocpp.cs._2015._10.StartTransactionResponse;
 import org.springframework.stereotype.Service;
 
+/**
+ * This class is used to intercept  StartTransaction request coming from charger and map vehicle RFID tag with charging box id and connector ID
+ *
+ * @author Mehmet Dongel <mehmet.dongel@gmail.com>
+ * @since 10.11.2021
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
