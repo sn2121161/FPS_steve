@@ -11,7 +11,14 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
-
+/**
+ * This class is used to get the secret parameter values from Azure Key Vault
+ *
+ *
+ *
+ * @author Mehmet Dongel <mehmet.dongel@gmail.com>
+ * @since 05.11.2021
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
