@@ -4,12 +4,10 @@ import com.azure.identity.DefaultAzureCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import com.azure.security.keyvault.secrets.models.KeyVaultSecret;
+import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContextException;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 /**
  * This class is used to get the secret parameter values from Azure Key Vault
@@ -24,7 +22,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AzureKeyVaultAdapter {
 
-  private static final String ADMIN_PASSWORD = "admin-password";
+  private static final String ADMIN_PASSWORD = "admin-user-password";
   private static final String TOPIC_CONNECTION_STRING = "topic-connection-string";
   private static final String TOPIC_NAME = "topic-name";
   private static final String TOPIC_SUBSCRIPTION_NAME = "topic-subscription-name";
@@ -60,6 +58,7 @@ public class AzureKeyVaultAdapter {
 
   private String getValue(String queueName) {
     while (!initialized) {
+      log.error("AzureKeyVaultAdapter is still not initialized!");
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
@@ -70,8 +69,7 @@ public class AzureKeyVaultAdapter {
     return secretClient.getSecret(queueName).getValue();
   }
 
-  @EventListener(ContextRefreshedEvent.class)
-  @Order(1)
+  @PostConstruct
   private void start() throws InterruptedException, ApplicationContextException {
     try {
       secretClient = new SecretClientBuilder()
@@ -79,7 +77,7 @@ public class AzureKeyVaultAdapter {
           .credential(new DefaultAzureCredentialBuilder().build())
           .buildClient();
 
-      KeyVaultSecret secret = secretClient.setSecret("test-key", "test-value");
+      KeyVaultSecret secret = secretClient.getSecret(TOPIC_NAME);
       System.out.printf("Secret created with name \"%s\" and value \"%s\"%n", secret.getName(),
           secret.getValue());
       initialized = true;
