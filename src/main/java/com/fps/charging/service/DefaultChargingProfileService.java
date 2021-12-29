@@ -41,6 +41,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+/**
+ * This class is used to process new charging profile message coming from FPS
+ *
+ *
+ *
+ * @author Mehmet Dongel <mehmet.dongel@gmail.com>
+ * @since 05.11.2021
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -56,6 +64,8 @@ public class DefaultChargingProfileService implements ChargingProfileService {
   @Qualifier("ChargePointService16_Client")
   private ChargePointService16_Client client16;
 
+  // Ths method updates the charging profile tables to store new charging profile
+  // and updates ocpp_tag table to link vehicle rfid tag with the new charging profile
   @Override
   public void processChargingProfileMessage(ChargingProfileRequest chargingProfileRequest) {
     log.info(
@@ -66,6 +76,7 @@ public class DefaultChargingProfileService implements ChargingProfileService {
     applyChargingProfile(chargingProfileRequest.getIdTag());
   }
 
+  // Ths method sends the charging profile to charge box
   public void applyChargingProfile(String idTag) {
     OcppTagRecord ocppTag = ocppTagUpdateRepository.findByOcppTag(idTag);
 

@@ -30,9 +30,9 @@ public class AzureMessageSender implements MessageSender {
 
   private final AzureServiceBusTopicAdapter azureServiceBusTopicAdapter;
 
+  // Send messages to Azure Service Topic
   @Override
   public void sendMessage(String message) {
     azureServiceBusTopicAdapter.sendMessage(message);
-
   }
 }

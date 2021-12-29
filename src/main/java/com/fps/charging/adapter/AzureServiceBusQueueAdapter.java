@@ -28,43 +28,51 @@ import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
 import com.azure.messaging.servicebus.ServiceBusSenderClient;
 import com.fps.charging.JsonUtils;
 import com.fps.charging.adapter.model.ChargingProfileRequest;
+import com.fps.charging.security.AzureKeyVaultAdapter;
 import com.fps.charging.service.ChargingProfileService;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.ContextStoppedEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
+/**
+ * This class is used to connect Azure Service Queue to consume and process new charging profile messages created vy FPS adapter
+ *
+ * @author Mehmet Dongel <mehmet.dongel@gmail.com>
+ * @since 05.11.2021
+ */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AzureServiceBusQueueAdapter {
 
-  static String queueConnectionString = "Endpoint=sb://steve-to-fps.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=Ig2l2323OvjTtL2Upf9sENuWyrwGEkeVxMHluJSt/MI=";
-  static String queueName = "schedule-matcher-local";
+  // Used to get the queue connection information from Azure Key Vault
+  private final AzureKeyVaultAdapter azureKeyVaultAdapter;
 
-  private ServiceBusSenderClient senderClient;
-  private ServiceBusProcessorClient processorClient;
-  private ServiceBusProcessorClient queueProcessorClient;
-
+  // Used to save the new charging profile coming from FPS and to apply this profile to the charging points
   private final ChargingProfileService chargingProfileService;
 
-  public AzureServiceBusQueueAdapter(ChargingProfileService chargingProfileService) {
-    this.chargingProfileService = chargingProfileService;
-  }
+  // Used to connect Azure Service Queue to consume and process new charging profile messages created vy FPS adapter
+  private ServiceBusProcessorClient queueProcessorClient;
 
+
+  // This method is called by spring framework whle the application is starting up. This method performs
+  // connection to Azure Service Queue
   @EventListener(ContextRefreshedEvent.class)
+  @Order(2)
   public void start() throws InterruptedException {
-    System.out.println("Starting azure Integration");
+    System.out.println("Starting azure Integration Queue Adapter");
     createQueueListener();
-
   }
 
   @EventListener(ContextStoppedEvent.class)
   public void stop() throws InterruptedException {
     System.out.println("Stopping and closing the processor");
-    processorClient.close();
     queueProcessorClient.close();
   }
 
@@ -74,19 +82,19 @@ public class AzureServiceBusQueueAdapter {
 
     // Create an instance of the processor through the ServiceBusClientBuilder
     queueProcessorClient = new ServiceBusClientBuilder()
-        .connectionString(queueConnectionString)
+        .connectionString(azureKeyVaultAdapter.getQueueConnectionString())
         .processor()
-        .queueName(queueName)
+        .queueName(azureKeyVaultAdapter.getQueueName())
         .processMessage(this::processMessage)
         .processError(context -> processError(context, countdownLatch))
         .buildProcessorClient();
 
-    System.out.println("Starting the processor");
+    System.out.println("Starting the processor -> Queue Adapter");
     queueProcessorClient.start();
-
-
+    System.out.println("Started the processor -> Queue Adapter");
   }
 
+  // This method consumes the new charging profile message from Azure Service Queue
   private void processMessage(ServiceBusReceivedMessageContext context) {
     ServiceBusReceivedMessage message = context.getMessage();
     System.out.printf("Processing message. Session: %s, Sequence #: %s. Contents: %s%n",
@@ -108,6 +116,7 @@ public class AzureServiceBusQueueAdapter {
 
   }
 
+  // This method consumes the error message which is thrown at processMessage method.
   private void processError(ServiceBusErrorContext context, CountDownLatch countdownLatch) {
     System.out.printf("Error when receiving messages from namespace: '%s'. Entity: '%s'%n",
         context.getFullyQualifiedNamespace(), context.getEntityPath());

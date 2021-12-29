@@ -138,6 +138,7 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     public StartTransactionResponse startTransaction(StartTransactionRequest parameters, String chargeBoxIdentity) {
       StartTransactionResponse startTransactionResponse = service.startTransaction(parameters,
           chargeBoxIdentity);
+      // todo: check response
       sendMessage(parameters, chargeBoxIdentity, START_TRANSACTION);
 
       startTransactionListener.process(parameters, chargeBoxIdentity, startTransactionResponse);
