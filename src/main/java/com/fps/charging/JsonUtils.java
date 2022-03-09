@@ -21,12 +21,13 @@ package com.fps.charging;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.fasterxml.jackson.datatype.jsonorg.JsonOrgModule;
+import de.rwth.idsg.steve.ocpp.ws.JsonObjectMapper;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JsonUtils {
 
-  private static ObjectMapper mapper = new ObjectMapper();
+  private static ObjectMapper mapper = JsonObjectMapper.INSTANCE.getMapper();
 
   static {
     registerModule(mapper);
@@ -38,6 +39,8 @@ public class JsonUtils {
       jsonObject = null;
     } else {
       try {
+        registerModule(mapper);
+
         jsonObject = mapper.readValue(jsonString, clazz);
       } catch (Exception e) {
         jsonObject = null;
@@ -58,6 +61,6 @@ public class JsonUtils {
   private static void registerModule(ObjectMapper mapper) {
     mapper.registerModule(new JsonOrgModule());
     mapper.registerModule(new JodaModule());
-    // mapper.registerModule(new JavaTimeModule());
+//    mapper.registerModule(new JavaTimeModule());
   }
 }
