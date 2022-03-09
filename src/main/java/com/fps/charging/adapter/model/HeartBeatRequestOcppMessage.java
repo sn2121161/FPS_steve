@@ -3,6 +3,7 @@ package com.fps.charging.adapter.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fps.charging.JsonUtils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,15 +13,12 @@ import ocpp.cs._2015._10.HeartbeatRequest;
 @AllArgsConstructor
 @Data
 @Builder
+@JsonPropertyOrder({"chargeBoxId", "heartbeatRequest"})
 public class HeartBeatRequestOcppMessage {
 
   @JsonInclude(Include.NON_NULL)
   @JsonProperty("ChargePointIdentifier")
   private String chargeBoxId;
-
-  @JsonInclude(Include.NON_NULL)
-  @JsonProperty("TransactionId")
-  private Long transactionId;
 
   @JsonInclude(Include.NON_NULL)
   @JsonProperty("HeartbeatRequest")

@@ -3,6 +3,7 @@ package com.fps.charging.adapter.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fps.charging.JsonUtils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,6 +14,7 @@ import org.joda.time.DateTime;
 @AllArgsConstructor
 @Data
 @Builder
+@JsonPropertyOrder({ "startTransactionRequest", "chargeBoxId", "transactionId"})
 public class StartTransactionRequestOcppMessage {
 
   @JsonInclude(Include.NON_NULL)
@@ -32,6 +34,7 @@ public class StartTransactionRequestOcppMessage {
 
     StartTransactionRequestOcppMessage build = StartTransactionRequestOcppMessage.builder()
         .chargeBoxId("chargeBoxId")
+        .transactionId(12345)
         .startTransactionRequest(new StartTransactionRequest()
             .withConnectorId(1)
             .withIdTag("ABC2334")
