@@ -56,6 +56,7 @@ public class SteveProdStarter implements ApplicationStarter {
             started();
 
         } catch (Exception e) {
+            e.printStackTrace();
 
             stopPrintingDots();
             log.error("Exception happened", e);

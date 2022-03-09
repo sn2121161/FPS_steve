@@ -18,15 +18,12 @@
  */
 package de.rwth.idsg.steve.ocpp.soap;
 
-import static com.fps.charging.adapter.model.OccpMessageType.HEARTBEAT;
-import static com.fps.charging.adapter.model.OccpMessageType.METER_VALUES;
-import static com.fps.charging.adapter.model.OccpMessageType.START_TRANSACTION;
-import static com.fps.charging.adapter.model.OccpMessageType.STATUS_NOTIFICATION;
-import static com.fps.charging.adapter.model.OccpMessageType.STOP_TRANSACTION;
-
 import com.fps.charging.JsonUtils;
-import com.fps.charging.adapter.model.OccpMessageType;
-import com.fps.charging.adapter.model.OcppMessage;
+import com.fps.charging.adapter.model.HeartBeatRequestOcppMessage;
+import com.fps.charging.adapter.model.MeterValuesRequestOcppMessage;
+import com.fps.charging.adapter.model.StartTransactionRequestOcppMessage;
+import com.fps.charging.adapter.model.StatusNotificationRequestOcppMessage;
+import com.fps.charging.adapter.model.StopTransactionRequestOcppMessage;
 import com.fps.charging.listener.AuthorizationListener;
 import com.fps.charging.listener.StartTransactionListener;
 import com.fps.charging.service.MessageSender;
@@ -74,236 +71,282 @@ import org.springframework.stereotype.Service;
 @Addressing(enabled = true, required = false)
 @BindingType(value = SOAPBinding.SOAP12HTTP_BINDING)
 @WebService(
-        serviceName = "CentralSystemService",
-        portName = "CentralSystemServiceSoap12",
-        targetNamespace = "urn://Ocpp/Cs/2015/10/",
-        endpointInterface = "ocpp.cs._2015._10.CentralSystemService")
+    serviceName = "CentralSystemService",
+    portName = "CentralSystemServiceSoap12",
+    targetNamespace = "urn://Ocpp/Cs/2015/10/",
+    endpointInterface = "ocpp.cs._2015._10.CentralSystemService")
 public class CentralSystemService16_SoapServer implements CentralSystemService {
 
-    @Autowired
-    private MessageSender messageSender;
+  @Autowired
+  private MessageSender messageSender;
 
-    @Autowired
-    private CentralSystemService16_Service service;
+  @Autowired
+  private CentralSystemService16_Service service;
 
-    @Autowired
-    private AuthorizationListener authorizationListener;
+  @Autowired
+  private AuthorizationListener authorizationListener;
 
-    @Autowired
-    private StartTransactionListener startTransactionListener;
+  @Autowired
+  private StartTransactionListener startTransactionListener;
 
-    public BootNotificationResponse bootNotificationWithTransport(BootNotificationRequest parameters,
-                                                                  String chargeBoxIdentity, OcppProtocol protocol) {
-        if (protocol.getVersion() != OcppVersion.V_16) {
-            throw new IllegalArgumentException("Unexpected OCPP version: " + protocol.getVersion());
-        }
-        return service.bootNotification(parameters, chargeBoxIdentity, protocol);
+  public BootNotificationResponse bootNotificationWithTransport(BootNotificationRequest parameters,
+      String chargeBoxIdentity, OcppProtocol protocol) {
+    if (protocol.getVersion() != OcppVersion.V_16) {
+      throw new IllegalArgumentException("Unexpected OCPP version: " + protocol.getVersion());
+    }
+    return service.bootNotification(parameters, chargeBoxIdentity, protocol);
+  }
+
+  @Override
+  public BootNotificationResponse bootNotification(BootNotificationRequest parameters,
+      String chargeBoxIdentity) {
+    return this.bootNotificationWithTransport(parameters, chargeBoxIdentity,
+        OcppProtocol.V_16_SOAP);
+  }
+
+  @Override
+  public FirmwareStatusNotificationResponse firmwareStatusNotification(
+      FirmwareStatusNotificationRequest parameters,
+      String chargeBoxIdentity) {
+    return service.firmwareStatusNotification(parameters, chargeBoxIdentity);
+  }
+
+  @Override
+  public StatusNotificationResponse statusNotification(StatusNotificationRequest parameters,
+      String chargeBoxIdentity) {
+
+    StatusNotificationResponse statusNotificationResponse = service.statusNotification(parameters,
+        chargeBoxIdentity);
+    if (statusNotificationResponse != null) {
+      sendMessage(StatusNotificationRequestOcppMessage.builder()
+          .chargeBoxId(chargeBoxIdentity)
+          .statusNotificationRequest(parameters)
+          .build());
+    }
+    return statusNotificationResponse;
+  }
+
+  @Override
+  public MeterValuesResponse meterValues(MeterValuesRequest parameters, String chargeBoxIdentity) {
+    MeterValuesResponse meterValuesResponse = service.meterValues(parameters, chargeBoxIdentity);
+
+    if (meterValuesResponse != null) {
+      sendMessage(MeterValuesRequestOcppMessage.builder()
+          .chargeBoxId(chargeBoxIdentity)
+          .meterValuesRequest(parameters)
+          .build());
     }
 
-    @Override
-    public BootNotificationResponse bootNotification(BootNotificationRequest parameters, String chargeBoxIdentity) {
-        return this.bootNotificationWithTransport(parameters, chargeBoxIdentity, OcppProtocol.V_16_SOAP);
+    return meterValuesResponse;
+  }
+
+  @Override
+  public DiagnosticsStatusNotificationResponse diagnosticsStatusNotification(
+      DiagnosticsStatusNotificationRequest parameters, String chargeBoxIdentity) {
+    return service.diagnosticsStatusNotification(parameters, chargeBoxIdentity);
+  }
+
+  @Override
+  public StartTransactionResponse startTransaction(StartTransactionRequest parameters,
+      String chargeBoxIdentity) {
+    StartTransactionResponse startTransactionResponse = service.startTransaction(parameters,
+        chargeBoxIdentity);
+    // todo: check response
+    if (startTransactionResponse.isSetTransactionId()) {
+      sendMessage(StartTransactionRequestOcppMessage.builder()
+          .chargeBoxId(chargeBoxIdentity)
+          .startTransactionRequest(parameters)
+          .transactionId(startTransactionResponse.getTransactionId())
+          .build());
+
+      try {
+        startTransactionListener.process(parameters, chargeBoxIdentity, startTransactionResponse);
+      } catch (Exception e) {
+        log.error("Exception while handling    startTransaction message.", e);
+      }
     }
 
-    @Override
-    public FirmwareStatusNotificationResponse firmwareStatusNotification(FirmwareStatusNotificationRequest parameters,
-                                                                         String chargeBoxIdentity) {
-        return service.firmwareStatusNotification(parameters, chargeBoxIdentity);
+    return startTransactionResponse;
+  }
+
+  @Override
+  public StopTransactionResponse stopTransaction(StopTransactionRequest parameters,
+      String chargeBoxIdentity) {
+    StopTransactionResponse stopTransactionResponse = service.stopTransaction(parameters,
+        chargeBoxIdentity);
+    if (stopTransactionResponse.isSetIdTagInfo()) {
+      sendMessage(StopTransactionRequestOcppMessage.builder()
+          .chargeBoxId(chargeBoxIdentity)
+          .stopTransactionRequest(parameters)
+          .build());
     }
+    return stopTransactionResponse;
+  }
 
-    @Override
-    public StatusNotificationResponse statusNotification(StatusNotificationRequest parameters,
-                                                         String chargeBoxIdentity) {
+  @Override
+  public HeartbeatResponse heartbeat(HeartbeatRequest parameters, String chargeBoxIdentity) {
+    HeartbeatResponse heartbeat = service.heartbeat(parameters, chargeBoxIdentity);
+    if (heartbeat.isSetCurrentTime()) {
 
-      StatusNotificationResponse statusNotificationResponse = service.statusNotification(parameters,
-          chargeBoxIdentity);
-      sendMessage(parameters, chargeBoxIdentity, STATUS_NOTIFICATION);
-      return statusNotificationResponse;
+      sendMessage(HeartBeatRequestOcppMessage.builder()
+          .chargeBoxId(chargeBoxIdentity)
+          .heartbeatRequest(parameters)
+          .build());
     }
+    return heartbeat;
+  }
 
-    @Override
-    public MeterValuesResponse meterValues(MeterValuesRequest parameters, String chargeBoxIdentity) {
-      MeterValuesResponse meterValuesResponse = service.meterValues(parameters, chargeBoxIdentity);
-      sendMessage(parameters, chargeBoxIdentity,METER_VALUES);
-      return meterValuesResponse;
-    }
+  @Override
+  public AuthorizeResponse authorize(AuthorizeRequest parameters, String chargeBoxIdentity) {
+    AuthorizeResponse authorizeResponse = service.authorize(parameters, chargeBoxIdentity);
+    authorizationListener.process(parameters, chargeBoxIdentity, authorizeResponse);
+    return authorizeResponse;
+  }
 
-    @Override
-    public DiagnosticsStatusNotificationResponse diagnosticsStatusNotification(
-            DiagnosticsStatusNotificationRequest parameters, String chargeBoxIdentity) {
-        return service.diagnosticsStatusNotification(parameters, chargeBoxIdentity);
-    }
+  @Override
+  public DataTransferResponse dataTransfer(DataTransferRequest parameters,
+      String chargeBoxIdentity) {
+    return service.dataTransfer(parameters, chargeBoxIdentity);
+  }
 
-    @Override
-    public StartTransactionResponse startTransaction(StartTransactionRequest parameters, String chargeBoxIdentity) {
-      StartTransactionResponse startTransactionResponse = service.startTransaction(parameters,
-          chargeBoxIdentity);
-      // todo: check response
-      sendMessage(parameters, chargeBoxIdentity, START_TRANSACTION);
+  private void sendMessage(Object occpMessage) {
+    String message = JsonUtils.toJson(occpMessage);
 
-      startTransactionListener.process(parameters, chargeBoxIdentity, startTransactionResponse);
+    log.info("Sending Ocpp Message to FPS back office : {} ", message);
+    messageSender.sendMessage(message);
+    log.info("Sent Ocpp Message to FPS back office : {} ", message);
+  }
 
-      return startTransactionResponse;
-    }
+  // -------------------------------------------------------------------------
+  // No-op
+  // -------------------------------------------------------------------------
 
-    @Override
-    public StopTransactionResponse stopTransaction(StopTransactionRequest parameters, String chargeBoxIdentity) {
-      StopTransactionResponse stopTransactionResponse = service.stopTransaction(parameters,
-          chargeBoxIdentity);
-      sendMessage(parameters, chargeBoxIdentity,STOP_TRANSACTION);
-      return stopTransactionResponse;
-    }
+  @Override
+  public Response<StopTransactionResponse> stopTransactionAsync(StopTransactionRequest parameters,
+      String chargeBoxIdentity) {
+    return null;
+  }
 
-    @Override
-    public HeartbeatResponse heartbeat(HeartbeatRequest parameters, String chargeBoxIdentity) {
-      HeartbeatResponse heartbeat = service.heartbeat(parameters, chargeBoxIdentity);
-      sendMessage(parameters, chargeBoxIdentity, HEARTBEAT);
-      return heartbeat;
-    }
+  @Override
+  public Future<?> stopTransactionAsync(StopTransactionRequest parameters, String chargeBoxIdentity,
+      AsyncHandler<StopTransactionResponse> asyncHandler) {
+    return null;
+  }
 
-    @Override
-    public AuthorizeResponse authorize(AuthorizeRequest parameters, String chargeBoxIdentity) {
-        AuthorizeResponse authorizeResponse = service.authorize(parameters, chargeBoxIdentity);
-        authorizationListener.process(parameters,chargeBoxIdentity,authorizeResponse);
-        return authorizeResponse;
-    }
+  @Override
+  public Response<StatusNotificationResponse> statusNotificationAsync(
+      StatusNotificationRequest parameters,
+      String chargeBoxIdentity) {
+    return null;
+  }
 
-    @Override
-    public DataTransferResponse dataTransfer(DataTransferRequest parameters, String chargeBoxIdentity) {
-        return service.dataTransfer(parameters, chargeBoxIdentity);
-    }
+  @Override
+  public Future<?> statusNotificationAsync(StatusNotificationRequest parameters,
+      String chargeBoxIdentity,
+      AsyncHandler<StatusNotificationResponse> asyncHandler) {
+    return null;
+  }
 
-    private void sendMessage(Object parameters, String chargeBoxId, OccpMessageType occpMessageType) {
-        String message = JsonUtils.toJson(OcppMessage.builder()
-            .chargeBoxId(chargeBoxId)
-            .occpMessageType(occpMessageType)
-            .body(parameters)
-            .build());
+  @Override
+  public Response<AuthorizeResponse> authorizeAsync(AuthorizeRequest parameters,
+      String chargeBoxIdentity) {
+    return null;
+  }
 
-        log.info("Sending Ocpp Message to FPS back office : {} ", message);
-        messageSender.sendMessage(message);;
-        log.info("Sent Ocpp Message to FPS back office : {} ", message);
-    }
+  @Override
+  public Future<?> authorizeAsync(AuthorizeRequest parameters, String chargeBoxIdentity,
+      AsyncHandler<AuthorizeResponse> asyncHandler) {
+    return null;
+  }
 
-    // -------------------------------------------------------------------------
-    // No-op
-    // -------------------------------------------------------------------------
+  @Override
+  public Response<StartTransactionResponse> startTransactionAsync(
+      StartTransactionRequest parameters,
+      String chargeBoxIdentity) {
+    return null;
+  }
 
-    @Override
-    public Response<StopTransactionResponse> stopTransactionAsync(StopTransactionRequest parameters,
-                                                                  String chargeBoxIdentity) {
-        return null;
-    }
+  @Override
+  public Future<?> startTransactionAsync(StartTransactionRequest parameters,
+      String chargeBoxIdentity,
+      AsyncHandler<StartTransactionResponse> asyncHandler) {
+    return null;
+  }
 
-    @Override
-    public Future<?> stopTransactionAsync(StopTransactionRequest parameters, String chargeBoxIdentity,
-                                          AsyncHandler<StopTransactionResponse> asyncHandler) {
-        return null;
-    }
+  @Override
+  public Response<FirmwareStatusNotificationResponse> firmwareStatusNotificationAsync(
+      FirmwareStatusNotificationRequest parameters, String chargeBoxIdentity) {
+    return null;
+  }
 
-    @Override
-    public Response<StatusNotificationResponse> statusNotificationAsync(StatusNotificationRequest parameters,
-                                                                        String chargeBoxIdentity) {
-        return null;
-    }
+  @Override
+  public Future<?> firmwareStatusNotificationAsync(FirmwareStatusNotificationRequest parameters,
+      String chargeBoxIdentity,
+      AsyncHandler<FirmwareStatusNotificationResponse> asyncHandler) {
+    return null;
+  }
 
-    @Override
-    public Future<?> statusNotificationAsync(StatusNotificationRequest parameters, String chargeBoxIdentity,
-                                             AsyncHandler<StatusNotificationResponse> asyncHandler) {
-        return null;
-    }
+  @Override
+  public Response<BootNotificationResponse> bootNotificationAsync(
+      BootNotificationRequest parameters,
+      String chargeBoxIdentity) {
+    return null;
+  }
 
-    @Override
-    public Response<AuthorizeResponse> authorizeAsync(AuthorizeRequest parameters, String chargeBoxIdentity) {
-        return null;
-    }
+  @Override
+  public Future<?> bootNotificationAsync(BootNotificationRequest parameters,
+      String chargeBoxIdentity,
+      AsyncHandler<BootNotificationResponse> asyncHandler) {
+    return null;
+  }
 
-    @Override
-    public Future<?> authorizeAsync(AuthorizeRequest parameters, String chargeBoxIdentity,
-                                    AsyncHandler<AuthorizeResponse> asyncHandler) {
-        return null;
-    }
+  @Override
+  public Response<HeartbeatResponse> heartbeatAsync(HeartbeatRequest parameters,
+      String chargeBoxIdentity) {
+    return null;
+  }
 
-    @Override
-    public Response<StartTransactionResponse> startTransactionAsync(StartTransactionRequest parameters,
-                                                                    String chargeBoxIdentity) {
-        return null;
-    }
+  @Override
+  public Future<?> heartbeatAsync(HeartbeatRequest parameters, String chargeBoxIdentity,
+      AsyncHandler<HeartbeatResponse> asyncHandler) {
+    return null;
+  }
 
-    @Override
-    public Future<?> startTransactionAsync(StartTransactionRequest parameters, String chargeBoxIdentity,
-                                           AsyncHandler<StartTransactionResponse> asyncHandler) {
-        return null;
-    }
+  @Override
+  public Response<MeterValuesResponse> meterValuesAsync(MeterValuesRequest parameters,
+      String chargeBoxIdentity) {
+    return null;
+  }
 
-    @Override
-    public Response<FirmwareStatusNotificationResponse> firmwareStatusNotificationAsync(
-            FirmwareStatusNotificationRequest parameters, String chargeBoxIdentity) {
-        return null;
-    }
+  @Override
+  public Future<?> meterValuesAsync(MeterValuesRequest parameters, String chargeBoxIdentity,
+      AsyncHandler<MeterValuesResponse> asyncHandler) {
+    return null;
+  }
 
-    @Override
-    public Future<?> firmwareStatusNotificationAsync(FirmwareStatusNotificationRequest parameters,
-                                                     String chargeBoxIdentity,
-                                                     AsyncHandler<FirmwareStatusNotificationResponse> asyncHandler) {
-        return null;
-    }
+  @Override
+  public Response<DataTransferResponse> dataTransferAsync(DataTransferRequest parameters,
+      String chargeBoxIdentity) {
+    return null;
+  }
 
-    @Override
-    public Response<BootNotificationResponse> bootNotificationAsync(BootNotificationRequest parameters,
-                                                                    String chargeBoxIdentity) {
-        return null;
-    }
+  @Override
+  public Future<?> dataTransferAsync(DataTransferRequest parameters, String chargeBoxIdentity,
+      AsyncHandler<DataTransferResponse> asyncHandler) {
+    return null;
+  }
 
-    @Override
-    public Future<?> bootNotificationAsync(BootNotificationRequest parameters, String chargeBoxIdentity,
-                                           AsyncHandler<BootNotificationResponse> asyncHandler) {
-        return null;
-    }
+  @Override
+  public Response<DiagnosticsStatusNotificationResponse> diagnosticsStatusNotificationAsync(
+      DiagnosticsStatusNotificationRequest parameters, String chargeBoxIdentity) {
+    return null;
+  }
 
-    @Override
-    public Response<HeartbeatResponse> heartbeatAsync(HeartbeatRequest parameters, String chargeBoxIdentity) {
-        return null;
-    }
-
-    @Override
-    public Future<?> heartbeatAsync(HeartbeatRequest parameters, String chargeBoxIdentity,
-                                    AsyncHandler<HeartbeatResponse> asyncHandler) {
-        return null;
-    }
-
-    @Override
-    public Response<MeterValuesResponse> meterValuesAsync(MeterValuesRequest parameters, String chargeBoxIdentity) {
-        return null;
-    }
-
-    @Override
-    public Future<?> meterValuesAsync(MeterValuesRequest parameters, String chargeBoxIdentity,
-                                      AsyncHandler<MeterValuesResponse> asyncHandler) {
-        return null;
-    }
-
-    @Override
-    public Response<DataTransferResponse> dataTransferAsync(DataTransferRequest parameters, String chargeBoxIdentity) {
-        return null;
-    }
-
-    @Override
-    public Future<?> dataTransferAsync(DataTransferRequest parameters, String chargeBoxIdentity,
-                                       AsyncHandler<DataTransferResponse> asyncHandler) {
-        return null;
-    }
-
-    @Override
-    public Response<DiagnosticsStatusNotificationResponse> diagnosticsStatusNotificationAsync(
-            DiagnosticsStatusNotificationRequest parameters, String chargeBoxIdentity) {
-        return null;
-    }
-
-    @Override
-    public Future<?> diagnosticsStatusNotificationAsync(DiagnosticsStatusNotificationRequest parameters,
-                                                        String chargeBoxIdentity,
-                                                        AsyncHandler<DiagnosticsStatusNotificationResponse> asyncHandler) {
-        return null;
-    }
+  @Override
+  public Future<?> diagnosticsStatusNotificationAsync(
+      DiagnosticsStatusNotificationRequest parameters,
+      String chargeBoxIdentity,
+      AsyncHandler<DiagnosticsStatusNotificationResponse> asyncHandler) {
+    return null;
+  }
 }
