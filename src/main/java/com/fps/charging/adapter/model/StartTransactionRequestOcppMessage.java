@@ -23,7 +23,7 @@ public class StartTransactionRequestOcppMessage {
 
   @JsonInclude(Include.NON_NULL)
   @JsonProperty("TransactionId")
-  private Integer transactionId;
+  private String transactionId;
 
   @JsonInclude(Include.NON_NULL)
   @JsonProperty("StartTransactionRequest")
@@ -34,7 +34,7 @@ public class StartTransactionRequestOcppMessage {
 
     StartTransactionRequestOcppMessage build = StartTransactionRequestOcppMessage.builder()
         .chargeBoxId("chargeBoxId")
-        .transactionId(12345)
+        .transactionId("12345")
         .startTransactionRequest(new StartTransactionRequest()
             .withConnectorId(1)
             .withIdTag("ABC2334")

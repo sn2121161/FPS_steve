@@ -156,7 +156,7 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
       sendMessage(StartTransactionRequestOcppMessage.builder()
           .chargeBoxId(chargeBoxIdentity)
           .startTransactionRequest(parameters)
-          .transactionId(startTransactionResponse.getTransactionId())
+          .transactionId(String.valueOf(startTransactionResponse.getTransactionId()))
           .build());
 
       try {
