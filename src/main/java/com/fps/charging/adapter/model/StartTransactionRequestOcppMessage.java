@@ -33,13 +33,13 @@ public class StartTransactionRequestOcppMessage {
   public static void main(String[] args) {
 
     StartTransactionRequestOcppMessage build = StartTransactionRequestOcppMessage.builder()
-        .chargeBoxId("chargeBoxId")
-        .transactionId("12345")
+        .chargeBoxId("Liv01")
+        .transactionId("261")
         .startTransactionRequest(new StartTransactionRequest()
             .withConnectorId(1)
-            .withIdTag("ABC2334")
+            .withIdTag("048039EA726C80")
             .withTimestamp(DateTime.now())
-            .withMeterStart(0))
+            .withMeterStart(174992))
         .build();
 
     String message = JsonUtils.toJson(build);
