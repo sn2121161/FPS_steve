@@ -35,7 +35,7 @@ public class StartTransactionRequestOcppMessage {
     StartTransactionRequestOcppMessage build = StartTransactionRequestOcppMessage.builder()
         .chargeBoxId("Liv01")
         .transactionId("261")
-        .startTransactionRequest(new StartTransactionRequest()
+        .startTransactionRequest(new StartTransactionRequestExt()
             .withConnectorId(1)
             .withIdTag("048039EA726C80")
             .withTimestamp(DateTime.now())
