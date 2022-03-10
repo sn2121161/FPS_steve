@@ -77,7 +77,9 @@ public class AzureServiceBusTopicAdapter {
   public void sendMessage(String message) {
     // send one message to the topic
     try {
-      senderClient.sendMessage(new ServiceBusMessage(message));
+      ServiceBusMessage serviceBusMessage = new ServiceBusMessage(message);
+      serviceBusMessage.setContentType("application/json");
+      senderClient.sendMessage(serviceBusMessage);
       log.info("Sent a single message to the topic: {} ", azureKeyVaultAdapter.getTopicName());
     } catch (Exception e) {
       // todo send error message to a queue
