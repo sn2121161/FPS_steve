@@ -20,7 +20,9 @@ package de.rwth.idsg.steve.ocpp.soap;
 
 import com.fps.charging.JsonUtils;
 import com.fps.charging.adapter.model.HeartBeatRequestOcppMessage;
+import com.fps.charging.adapter.model.MeterValue;
 import com.fps.charging.adapter.model.MeterValuesRequestOcppMessage;
+import com.fps.charging.adapter.model.SampledValue;
 import com.fps.charging.adapter.model.StartTransactionRequestOcppMessage;
 import com.fps.charging.adapter.model.StatusNotificationRequestOcppMessage;
 import com.fps.charging.adapter.model.StopTransactionRequestOcppMessage;
@@ -31,6 +33,7 @@ import de.rwth.idsg.steve.ocpp.OcppProtocol;
 import de.rwth.idsg.steve.ocpp.OcppVersion;
 import de.rwth.idsg.steve.service.CentralSystemService16_Service;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import javax.jws.WebService;
 import javax.xml.ws.AsyncHandler;
 import javax.xml.ws.BindingType;
@@ -120,7 +123,15 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     if (statusNotificationResponse != null) {
       sendMessage(StatusNotificationRequestOcppMessage.builder()
           .chargeBoxId(chargeBoxIdentity)
-          .statusNotificationRequest(parameters)
+          .statusNotificationRequest(com.fps.charging.adapter.model.StatusNotificationRequest.builder()
+              .status(parameters.getStatus().name())
+              .errorCode(parameters.getErrorCode().name())
+              .connectorId(parameters.getConnectorId())
+              .info(parameters.getInfo())
+              .vendorErrorCode(parameters.getVendorErrorCode())
+              .vendorId(parameters.getVendorId())
+              .timestamp(parameters.getTimestamp())
+              .build())
           .build());
     }
     return statusNotificationResponse;
@@ -131,13 +142,40 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     MeterValuesResponse meterValuesResponse = service.meterValues(parameters, chargeBoxIdentity);
 
     if (meterValuesResponse != null) {
-      sendMessage(MeterValuesRequestOcppMessage.builder()
-          .chargeBoxId(chargeBoxIdentity)
-          .meterValuesRequest(parameters)
-          .build());
+      sendMessage(buildMeterValuesRequestOcppMessage(parameters, chargeBoxIdentity));
     }
 
     return meterValuesResponse;
+  }
+
+  private MeterValuesRequestOcppMessage buildMeterValuesRequestOcppMessage(
+      MeterValuesRequest parameters,
+      String chargeBoxIdentity) {
+    return MeterValuesRequestOcppMessage.builder()
+        .chargeBoxId(chargeBoxIdentity)
+        .meterValuesRequest(com.fps.charging.adapter.model.MeterValuesRequest.builder()
+            .connectorId(parameters.getConnectorId())
+            .transactionId(parameters.getTransactionId())
+            .meterValue(parameters.getMeterValue().stream()
+                .map(m -> buildMeterValue(m)).collect(Collectors.toList())).build())
+        .build();
+  }
+
+  private MeterValue buildMeterValue(ocpp.cs._2015._10.MeterValue m) {
+    return MeterValue.builder()
+        .timestamp(m.getTimestamp())
+        .sampledValue(
+            m.getSampledValue().stream().map(s -> SampledValue.builder()
+                .format(s.getFormat())
+                .location(s.getLocation())
+                .measurand(s.getMeasurand())
+                .phase(s.getPhase())
+                .context(s.getContext().name())
+                .unit(s.getUnit())
+                .value(s.getValue())
+                .build()).collect(
+                Collectors.toList()))
+        .build();
   }
 
   @Override
@@ -155,7 +193,13 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     if (startTransactionResponse.isSetTransactionId()) {
       sendMessage(StartTransactionRequestOcppMessage.builder()
           .chargeBoxId(chargeBoxIdentity)
-          .startTransactionRequest(parameters)
+          .startTransactionRequest(com.fps.charging.adapter.model.StartTransactionRequest.builder()
+              .meterStart(parameters.getMeterStart())
+              .connectorId(parameters.getConnectorId())
+              .idTag(parameters.getIdTag())
+              .reservationId(parameters.getReservationId())
+              .timestamp(parameters.getTimestamp())
+              .build())
           .transactionId(String.valueOf(startTransactionResponse.getTransactionId()))
           .build());
 
@@ -175,12 +219,28 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     StopTransactionResponse stopTransactionResponse = service.stopTransaction(parameters,
         chargeBoxIdentity);
     if (stopTransactionResponse.isSetIdTagInfo()) {
-      sendMessage(StopTransactionRequestOcppMessage.builder()
-          .chargeBoxId(chargeBoxIdentity)
-          .stopTransactionRequest(parameters)
-          .build());
+      sendMessage(buildStopTransactionRequestOcppMessage(parameters, chargeBoxIdentity));
     }
     return stopTransactionResponse;
+  }
+
+  private StopTransactionRequestOcppMessage buildStopTransactionRequestOcppMessage(
+      StopTransactionRequest parameters,
+      String chargeBoxIdentity) {
+
+    return StopTransactionRequestOcppMessage.builder()
+        .chargeBoxId(chargeBoxIdentity)
+        .stopTransactionRequest(com.fps.charging.adapter.model.StopTransactionRequest.builder()
+            .meterStop(parameters.getMeterStop())
+            .idTag(parameters.getIdTag())
+            .reason(parameters.getReason().name())
+            .transactionId(parameters.getTransactionId())
+            .timestamp(parameters.getTimestamp())
+            .transactionData(parameters.getTransactionData().stream()
+                .map(m -> buildMeterValue(m))
+                .collect(Collectors.toList()))
+            .build())
+        .build();
   }
 
   @Override

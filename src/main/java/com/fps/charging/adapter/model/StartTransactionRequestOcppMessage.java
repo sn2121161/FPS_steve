@@ -8,13 +8,12 @@ import com.fps.charging.JsonUtils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import ocpp.cs._2015._10.StartTransactionRequest;
 import org.joda.time.DateTime;
 
 @AllArgsConstructor
 @Data
 @Builder
-@JsonPropertyOrder({ "startTransactionRequest", "chargeBoxId", "transactionId"})
+@JsonPropertyOrder({"startTransactionRequest", "chargeBoxId", "transactionId"})
 public class StartTransactionRequestOcppMessage {
 
   @JsonInclude(Include.NON_NULL)
@@ -35,11 +34,11 @@ public class StartTransactionRequestOcppMessage {
     StartTransactionRequestOcppMessage build = StartTransactionRequestOcppMessage.builder()
         .chargeBoxId("Liv01")
         .transactionId("261")
-        .startTransactionRequest(new StartTransactionRequestExt()
-            .withConnectorId(1)
-            .withIdTag("048039EA726C80")
-            .withTimestamp(DateTime.now())
-            .withMeterStart(174992))
+        .startTransactionRequest(StartTransactionRequest.builder()
+            .connectorId(1)
+            .idTag("048039EA726C80")
+            .timestamp(DateTime.now())
+            .meterStart(174992).build())
         .build();
 
     String message = JsonUtils.toJson(build);

@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import ocpp.cs._2015._10.StopTransactionRequest;
+
 
 @AllArgsConstructor
 @Data
