@@ -86,7 +86,7 @@ public class AzureServiceBusQueueAdapter {
         .processor()
         .queueName(azureKeyVaultAdapter.getQueueName())
         .processMessage(this::processMessage)
-//         .processError(context -> processError(context, countdownLatch))
+        .processError(context -> processError(context, countdownLatch))
         .buildProcessorClient();
 
     System.out.println("Starting the processor -> Queue Adapter");
@@ -104,8 +104,14 @@ public class AzureServiceBusQueueAdapter {
     log.info("Processing message. Session: {}, Sequence #: {}. Contents: {}%n",
         message.getMessageId(), message.getSequenceNumber(), message.getBody());
 
-    ChargingProfileRequest chargingProfileRequest = JsonUtils.toObject(message.getBody().toString(),
-        ChargingProfileRequest.class);
+    ChargingProfileRequest chargingProfileRequest = null;
+    try {
+      chargingProfileRequest = JsonUtils.toObject(message.getBody().toString(),
+          ChargingProfileRequest.class);
+    } catch (Exception e) {
+      System.out.println("Exception while creating chargingProfileRequest object. "+ e);
+      log.error("Exception while creating chargingProfileRequest object. ",e);
+    }
 
     try {
       chargingProfileService.processChargingProfileMessage(chargingProfileRequest);
@@ -139,6 +145,7 @@ public class AzureServiceBusQueueAdapter {
     } else if (reason == ServiceBusFailureReason.MESSAGE_LOCK_LOST) {
       System.out.printf("Message lock lost for message: %s%n", context.getException());
     } else if (reason == ServiceBusFailureReason.SERVICE_BUSY) {
+      System.out.printf("ServiceBusFailureReason is SERVICE_BUSY %n");
       try {
         // Choosing an arbitrary amount of time to wait until trying again.
         TimeUnit.SECONDS.sleep(1);
