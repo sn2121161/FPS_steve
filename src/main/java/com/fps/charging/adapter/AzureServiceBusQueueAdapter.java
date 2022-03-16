@@ -86,7 +86,7 @@ public class AzureServiceBusQueueAdapter {
         .processor()
         .queueName(azureKeyVaultAdapter.getQueueName())
         .processMessage(this::processMessage)
-        .processError(context -> processError(context, countdownLatch))
+//         .processError(context -> processError(context, countdownLatch))
         .buildProcessorClient();
 
     System.out.println("Starting the processor -> Queue Adapter");
