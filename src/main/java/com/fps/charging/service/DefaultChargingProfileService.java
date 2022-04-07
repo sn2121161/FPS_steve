@@ -44,8 +44,6 @@ import org.springframework.util.StringUtils;
 /**
  * This class is used to process new charging profile message coming from FPS
  *
- *
- *
  * @author Mehmet Dongel <mehmet.dongel@gmail.com>
  * @since 05.11.2021
  */
@@ -72,8 +70,18 @@ public class DefaultChargingProfileService implements ChargingProfileService {
         "Processing new charging profile message coming from FPS back office, idTag={}, chargingProfileId={}",
         chargingProfileRequest.getIdTag(), chargingProfileRequest.getChargingProfile());
 
-    processDbOperations(chargingProfileRequest);
-    applyChargingProfile(chargingProfileRequest.getIdTag());
+    try {
+      processDbOperations(chargingProfileRequest);
+    } catch (Exception e) {
+      log.error("Error while storing charging profile to db.", e);
+    }
+    try {
+      applyChargingProfile(chargingProfileRequest.getIdTag());
+    } catch (Exception e) {
+      log.error(
+          "Error while applying charging profile to charging point. chargingProfileRequest={}",
+          chargingProfileRequest, e);
+    }
   }
 
   // Ths method sends the charging profile to charge box
@@ -135,11 +143,17 @@ public class DefaultChargingProfileService implements ChargingProfileService {
         chargingProfileRequest.getIdTag());
 
     if (ocppTag == null) {
-      throw new SteveException(
-          "No ocpp_tag record is present for idTag=" + chargingProfileRequest.getIdTag());
+      log.error("No ocpp_tag record is present for idTag={}", chargingProfileRequest.getIdTag());
+      return;
     }
 
-    ocppTagUpdateRepository.updateOcppTagWithChargingProfile(ocppTag.getIdTag(),
-        chargingProfileId);
+    try {
+      ocppTagUpdateRepository.updateOcppTagWithChargingProfile(ocppTag.getIdTag(),
+          chargingProfileId);
+    } catch (Exception e) {
+      log.error("Unable to assign idTag={} with chargingProfile={}, exception is = {}",
+          chargingProfileRequest.getIdTag(), chargingProfileId, e);
+
+    }
   }
 }

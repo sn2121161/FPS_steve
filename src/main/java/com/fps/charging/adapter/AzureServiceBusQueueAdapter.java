@@ -41,7 +41,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 /**
- * This class is used to connect Azure Service Queue to consume and process new charging profile messages created vy FPS adapter
+ * This class is used to connect Azure Service Queue to consume and process new charging profile
+ * messages created vy FPS adapter
  *
  * @author Mehmet Dongel <mehmet.dongel@gmail.com>
  * @since 05.11.2021
@@ -109,14 +110,16 @@ public class AzureServiceBusQueueAdapter {
       chargingProfileRequest = JsonUtils.toObject(message.getBody().toString(),
           ChargingProfileRequest.class);
     } catch (Exception e) {
-      System.out.println("Exception while creating chargingProfileRequest object. "+ e);
-      log.error("Exception while creating chargingProfileRequest object. ",e);
+      System.out.println("Exception while creating chargingProfileRequest object. " + e);
+      log.error("Exception while creating chargingProfileRequest object. ", e);
+      return;
     }
 
     try {
       chargingProfileService.processChargingProfileMessage(chargingProfileRequest);
     } catch (Exception e) {
-      log.error("Unable to process new charging profile coming from FPS. Message:{}",
+      log.error(
+          "Unable to process new charging profile coming from FPS. Message:{}, exception is={}",
           message.getBody(), e);
     }
 
