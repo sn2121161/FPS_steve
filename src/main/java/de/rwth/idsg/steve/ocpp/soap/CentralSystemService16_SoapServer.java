@@ -121,26 +121,31 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     StatusNotificationResponse statusNotificationResponse = service.statusNotification(parameters,
         chargeBoxIdentity);
     if (statusNotificationResponse != null) {
-      StatusNotificationRequestOcppMessage statusNotificationRequestOcppMessage = StatusNotificationRequestOcppMessage.builder()
-          .chargeBoxId(chargeBoxIdentity)
-          .statusNotificationRequest(
-              com.fps.charging.adapter.model.StatusNotificationRequest.builder()
-                  .status(parameters.getStatus()==null?null:parameters.getStatus().name())
-                  .errorCode(parameters.getErrorCode()==null?null:parameters.getErrorCode().name())
-                  .connectorId(parameters.getConnectorId())
-                  .info(parameters.getInfo())
-                  .vendorErrorCode(parameters.getVendorErrorCode())
-                  .vendorId(parameters.getVendorId())
-                  .timestamp(parameters.getTimestamp())
-                  .build())
-          .build();
-      log.info(
-          "Created StatusNotificationRequestOcppMessage [{}] for topic to send to FPS back office",
-          statusNotificationRequestOcppMessage);
-      sendMessage(statusNotificationRequestOcppMessage);
-      log.info(
-          "Sent StatusNotificationRequestOcppMessage [{}] for topic to send to FPS back office",
-          statusNotificationRequestOcppMessage);
+      try {
+        StatusNotificationRequestOcppMessage statusNotificationRequestOcppMessage = StatusNotificationRequestOcppMessage.builder()
+            .chargeBoxId(chargeBoxIdentity)
+            .statusNotificationRequest(
+                com.fps.charging.adapter.model.StatusNotificationRequest.builder()
+                    .status(parameters.getStatus()==null?null:parameters.getStatus().name())
+                    .errorCode(parameters.getErrorCode()==null?null:parameters.getErrorCode().name())
+                    .connectorId(parameters.getConnectorId())
+                    .info(parameters.getInfo())
+                    .vendorErrorCode(parameters.getVendorErrorCode())
+                    .vendorId(parameters.getVendorId())
+                    .timestamp(parameters.getTimestamp())
+                    .build())
+            .build();
+        log.info(
+            "Created StatusNotificationRequestOcppMessage [{}] for topic to send to FPS back office",
+            statusNotificationRequestOcppMessage);
+        sendMessage(statusNotificationRequestOcppMessage);
+        log.info(
+            "Sent StatusNotificationRequestOcppMessage [{}] for topic to send to FPS back office",
+            statusNotificationRequestOcppMessage);
+      } catch (Exception e) {
+        e.printStackTrace();
+        log.error("Exception while creating and sending FPS back office message for StatusNotificationReques",e);
+      }
 
     }
     return statusNotificationResponse;
@@ -151,11 +156,17 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     MeterValuesResponse meterValuesResponse = service.meterValues(parameters, chargeBoxIdentity);
 
     if (meterValuesResponse != null) {
-      MeterValuesRequestOcppMessage occpMessage = buildMeterValuesRequestOcppMessage(parameters,
-          chargeBoxIdentity);
-      log.info("Created MeterValuesRequest:[{}] for topic to send to FPS back office", occpMessage);
-      sendMessage(occpMessage);
-      log.info("Sent MeterValuesRequest:[{}] for topic to send to FPS back office", occpMessage);
+      MeterValuesRequestOcppMessage occpMessage = null;
+      try {
+        occpMessage = buildMeterValuesRequestOcppMessage(parameters,
+            chargeBoxIdentity);
+        log.info("Created MeterValuesRequest:[{}] for topic to send to FPS back office", occpMessage);
+        sendMessage(occpMessage);
+        log.info("Sent MeterValuesRequest:[{}] for topic to send to FPS back office", occpMessage);
+      } catch (Exception e) {
+        log.error("Exception while creating and sending FPS back office message for MeterValuesRequest",e);
+      }
+
     }
 
     return meterValuesResponse;
@@ -204,22 +215,27 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
         chargeBoxIdentity);
     // todo: check response
     if (startTransactionResponse.isSetTransactionId()) {
-      StartTransactionRequestOcppMessage startTransactionRequestOcppMessage = StartTransactionRequestOcppMessage.builder()
-          .chargeBoxId(chargeBoxIdentity)
-          .startTransactionRequest(com.fps.charging.adapter.model.StartTransactionRequest.builder()
-              .meterStart(parameters.getMeterStart())
-              .connectorId(parameters.getConnectorId())
-              .idTag(parameters.getIdTag())
-              .reservationId(parameters.getReservationId())
-              .timestamp(parameters.getTimestamp())
-              .build())
-          .transactionId(String.valueOf(startTransactionResponse.getTransactionId()))
-          .build();
-      log.info("Created StartTransactionRequest:[{}] for topic to send to FPS back office",
-          startTransactionRequestOcppMessage);
-      sendMessage(startTransactionRequestOcppMessage);
-      log.info("Sent StartTransactionRequest:[{}] for topic to send to FPS back office",
-          startTransactionRequestOcppMessage);
+      try {
+        StartTransactionRequestOcppMessage startTransactionRequestOcppMessage = StartTransactionRequestOcppMessage.builder()
+            .chargeBoxId(chargeBoxIdentity)
+            .startTransactionRequest(com.fps.charging.adapter.model.StartTransactionRequest.builder()
+                .meterStart(parameters.getMeterStart())
+                .connectorId(parameters.getConnectorId())
+                .idTag(parameters.getIdTag())
+                .reservationId(parameters.getReservationId())
+                .timestamp(parameters.getTimestamp())
+                .build())
+            .transactionId(String.valueOf(startTransactionResponse.getTransactionId()))
+            .build();
+        log.info("Created StartTransactionRequest:[{}] for topic to send to FPS back office",
+            startTransactionRequestOcppMessage);
+        sendMessage(startTransactionRequestOcppMessage);
+        log.info("Sent StartTransactionRequest:[{}] for topic to send to FPS back office",
+            startTransactionRequestOcppMessage);
+      } catch (Exception e) {
+        e.printStackTrace();
+        log.error("Exception while creating and sending FPS back office message for StartTransactionRequest",e);
+      }
 
       try {
         startTransactionListener.process(parameters, chargeBoxIdentity, startTransactionResponse);
@@ -237,11 +253,16 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
     StopTransactionResponse stopTransactionResponse = service.stopTransaction(parameters,
         chargeBoxIdentity);
     if (stopTransactionResponse.isSetIdTagInfo()) {
-      StopTransactionRequestOcppMessage occpMessage = buildStopTransactionRequestOcppMessage(
-          parameters, chargeBoxIdentity);
-      log.info("Created StopTransactionRequest:[{}] for topic to send to FPS back office", occpMessage);
-      sendMessage(occpMessage);
-      log.info("Sent StopTransactionRequest:[{}] for topic to send to FPS back office", occpMessage);
+      try {
+        StopTransactionRequestOcppMessage occpMessage = buildStopTransactionRequestOcppMessage(
+            parameters, chargeBoxIdentity);
+        log.info("Created StopTransactionRequest:[{}] for topic to send to FPS back office", occpMessage);
+        sendMessage(occpMessage);
+        log.info("Sent StopTransactionRequest:[{}] for topic to send to FPS back office", occpMessage);
+      } catch (Exception e) {
+        e.printStackTrace();
+        log.error("Exception while creating and sending FPS back office message for StopTransactionRequest",e);
+      }
 
     }
     return stopTransactionResponse;
@@ -279,20 +300,25 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
         "Creating HeartbeatRequest for  chargeBoxIdentity={}  for topic to send to FPS back office",
         chargeBoxIdentity);
     if (heartbeat.isSetCurrentTime()) {
-      log.info(
-          "Creating HeartbeatRequest for  chargeBoxIdentity={} [CurrentTime is SET]  for topic to send to FPS back office",
-          chargeBoxIdentity);
-      HeartBeatRequestOcppMessage occpMessage = HeartBeatRequestOcppMessage.builder()
-          .chargeBoxId(chargeBoxIdentity)
-          .heartbeatRequest(parameters)
-          .build();
-      log.info(
-          "Created HeartbeatRequest:[{}] with chargeBoxIdentity={}  for topic to send to FPS back office",
-          occpMessage, chargeBoxIdentity);
-      sendMessage(occpMessage);
-      log.info(
-          "Sent HeartbeatRequest:[{}] with chargeBoxIdentity={}  for topic to send to FPS back office",
-          occpMessage, chargeBoxIdentity);
+      try {
+        log.info(
+            "Creating HeartbeatRequest for  chargeBoxIdentity={} [CurrentTime is SET]  for topic to send to FPS back office",
+            chargeBoxIdentity);
+        HeartBeatRequestOcppMessage occpMessage = HeartBeatRequestOcppMessage.builder()
+            .chargeBoxId(chargeBoxIdentity)
+            .heartbeatRequest(parameters)
+            .build();
+        log.info(
+            "Created HeartbeatRequest:[{}] with chargeBoxIdentity={}  for topic to send to FPS back office",
+            occpMessage, chargeBoxIdentity);
+        sendMessage(occpMessage);
+        log.info(
+            "Sent HeartbeatRequest:[{}] with chargeBoxIdentity={}  for topic to send to FPS back office",
+            occpMessage, chargeBoxIdentity);
+      } catch (Exception e) {
+        e.printStackTrace();
+        log.error("Exception while creating and sending FPS back office message for HeartbeatRequest",e);
+      }
     }
     return heartbeat;
   }
