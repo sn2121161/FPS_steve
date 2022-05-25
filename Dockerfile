@@ -23,6 +23,8 @@ COPY . /code
 
 # Wait for the db to startup(via dockerize), then 
 # Build and run steve, requires a db to be available on port 3306
+#CMD ping localhost
+
 CMD dockerize -wait tcp://mariadb:3306 -timeout 60s && \
 	mvn clean package -Pdocker -Djdk.tls.client.protocols="TLSv1,TLSv1.1,TLSv1.2" && \
 	java -jar target/steve.jar

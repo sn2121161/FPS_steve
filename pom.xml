@@ -32,14 +32,14 @@
         <java.version>11</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <jooq.version>3.16.6</jooq.version>
-        <cxf.version>3.5.2</cxf.version>
-        <spring.version>5.3.19</spring.version>
-        <spring.security.version>5.6.3</spring.security.version>
-        <mysql.jdbc.version>8.0.29</mysql.jdbc.version>
-        <jetty.version>9.4.46.v20220331</jetty.version>
-        <lombok.version>1.18.24</lombok.version>
-        <jackson.version>2.13.2</jackson.version>
+        <jooq.version>3.15.4</jooq.version>
+        <cxf.version>3.4.5</cxf.version>
+        <spring.version>5.3.12</spring.version>
+        <spring.security.version>5.6.1</spring.security.version>
+        <mysql.jdbc.version>8.0.27</mysql.jdbc.version>
+        <jetty.version>9.4.44.v20210927</jetty.version>
+        <lombok.version>1.18.22</lombok.version>
+        <jackson.version>2.13.0</jackson.version>
 
         <!-- In Mysql: schema == database (http://dev.mysql.com/doc/refman/5.6/en/glossary.html#glos_schema) -->
         <!--suppress UnresolvedMavenProperty -->
