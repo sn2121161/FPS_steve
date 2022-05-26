@@ -22,6 +22,7 @@ import de.rwth.idsg.steve.repository.dto.OcppTag;
 import de.rwth.idsg.steve.web.dto.OcppTagForm;
 import de.rwth.idsg.steve.web.dto.OcppTagQueryForm;
 import jooq.steve.db.tables.records.OcppTagActivityRecord;
+import jooq.steve.db.tables.records.OcppTagRecord;
 import org.jooq.Result;
 
 import java.util.List;
@@ -35,6 +36,8 @@ public interface OcppTagRepository {
 
     Result<OcppTagActivityRecord> getRecords();
     Result<OcppTagActivityRecord> getRecords(List<String> idTagList);
+
+    OcppTagRecord getOcppTagRecord(String idTag);
 
     OcppTagActivityRecord getRecord(String idTag);
     OcppTagActivityRecord getRecord(int ocppTagPk);
