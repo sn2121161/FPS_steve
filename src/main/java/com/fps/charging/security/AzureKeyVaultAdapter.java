@@ -24,8 +24,11 @@ public class AzureKeyVaultAdapter {
 
   private static final String ADMIN_PASSWORD = "admin-user-password";
   private static final String TOPIC_CONNECTION_STRING = "topic-connection-string";
+  private static final String CP_TOPIC_CONNECTION_STRING = "cp-topic-connection-string";
   private static final String TOPIC_NAME = "topic-name";
   private static final String TOPIC_SUBSCRIPTION_NAME = "topic-subscription-name";
+  private static final String CP_TOPIC_NAME = "cp-topic-name";
+  private static final String CP_TOPIC_SUBSCRIPTION_NAME = "cp-topic-subscription-name";
   private static final String QUEUE_CONNECTION_STRING = "queue-connection-string";
   private static final String QUEUE_NAME = "queue-name";
   private boolean initialized = false;
@@ -40,12 +43,24 @@ public class AzureKeyVaultAdapter {
     return getValue(TOPIC_CONNECTION_STRING);
   }
 
+  public String getCpTopicConnectionString() {
+    return getValue(CP_TOPIC_CONNECTION_STRING);
+  }
+
   public String getTopicName() {
     return getValue(TOPIC_NAME);
   }
 
   public String getTopicSubscriptionName() {
     return getValue(TOPIC_SUBSCRIPTION_NAME);
+  }
+
+  public String getCpTopicName() {
+    return getValue(CP_TOPIC_NAME);
+  }
+
+  public String getCpTopicSubscriptionName() {
+    return getValue(CP_TOPIC_SUBSCRIPTION_NAME);
   }
 
   public String getQueueConnectionString() {

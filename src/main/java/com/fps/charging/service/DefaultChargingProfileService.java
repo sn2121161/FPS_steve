@@ -70,6 +70,12 @@ public class DefaultChargingProfileService implements ChargingProfileService {
         "Processing new charging profile message coming from FPS back office, idTag={}, chargingProfileId={}",
         chargingProfileRequest.getIdTag(), chargingProfileRequest.getChargingProfile());
 
+    if (!IsRfidTagBelongs(chargingProfileRequest.getIdTag())) {
+      log.warn("Discarding Charging Profile Message. RfidTag:{} does not belong to this server",
+          chargingProfileRequest.getIdTag());
+      return;
+    }
+
     try {
       processDbOperations(chargingProfileRequest);
     } catch (Exception e) {
@@ -82,6 +88,10 @@ public class DefaultChargingProfileService implements ChargingProfileService {
           "Error while applying charging profile to charging point. chargingProfileRequest={}",
           chargingProfileRequest, e);
     }
+  }
+
+  private boolean IsRfidTagBelongs(String idTag) {
+    return ocppTagRepository.getOcppTagRecord(idTag) != null;
   }
 
   // Ths method sends the charging profile to charge box

@@ -129,6 +129,13 @@ public class OcppTagRepositoryImpl implements OcppTagRepository {
     }
 
     @Override
+    public OcppTagRecord getOcppTagRecord(String idTag) {
+        return ctx.selectFrom(OCPP_TAG)
+            .where(OCPP_TAG.ID_TAG.equal(idTag))
+            .fetchOne();
+    }
+
+    @Override
     public OcppTagActivityRecord getRecord(String idTag) {
         return ctx.selectFrom(OCPP_TAG_ACTIVITY)
                   .where(OCPP_TAG_ACTIVITY.ID_TAG.equal(idTag))

@@ -25,5 +25,14 @@ services:
     ports:
       - "8180:8180"
       - "8443:8443"
+    environment:
+      AZURE_CLIENT_SECRET: iDqur-r0Ju0hbHCwxy8DAOwMGoylI8COoj
+      AZURE_CLIENT_ID: e151b7a2-c889-4962-814f-5ba1a1c72a42
+      AZURE_TENANT_ID: 188263d3-9acb-46f8-80e0-78d979283817
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_DATABASE: stevedb
+      DB_USERNAME: steve
+      DB_PASSWORD: changeme
     depends_on:
       - db
