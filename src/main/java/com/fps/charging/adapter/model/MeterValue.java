@@ -1,5 +1,7 @@
 package com.fps.charging.adapter.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import de.rwth.idsg.ocpp.jaxb.JodaDateTimeConverter;
 import java.util.List;
@@ -17,5 +19,6 @@ public class MeterValue {
 
   @XmlJavaTypeAdapter(JodaDateTimeConverter.class)
   protected DateTime timestamp;
+  @JsonInclude(Include.ALWAYS)
   protected List<SampledValue> sampledValue;
 }
