@@ -32,6 +32,8 @@ import com.fps.charging.service.MessageSender;
 import de.rwth.idsg.steve.ocpp.OcppProtocol;
 import de.rwth.idsg.steve.ocpp.OcppVersion;
 import de.rwth.idsg.steve.service.CentralSystemService16_Service;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javax.jws.WebService;
@@ -62,6 +64,7 @@ import ocpp.cs._2015._10.StatusNotificationRequest;
 import ocpp.cs._2015._10.StatusNotificationResponse;
 import ocpp.cs._2015._10.StopTransactionRequest;
 import ocpp.cs._2015._10.StopTransactionResponse;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -272,6 +275,19 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
       StopTransactionRequest parameters,
       String chargeBoxIdentity) {
 
+    List<MeterValue> transactionData;
+    if (parameters.getTransactionData().isEmpty()) {
+      transactionData = Arrays.asList(MeterValue.builder()
+          .timestamp(DateTime.now())
+          .sampledValue(Arrays.asList(SampledValue.builder()
+              .build()))
+          .build());
+    } else {
+      transactionData = parameters.getTransactionData().stream()
+          .map(m -> buildMeterValue(m))
+          .collect(Collectors.toList());
+    }
+
     return StopTransactionRequestOcppMessage.builder()
         .chargeBoxId(chargeBoxIdentity)
         .stopTransactionRequest(com.fps.charging.adapter.model.StopTransactionRequest.builder()
@@ -280,9 +296,7 @@ public class CentralSystemService16_SoapServer implements CentralSystemService {
             .reason(parameters.getReason()==null?null:parameters.getReason().name())
             .transactionId(parameters.getTransactionId())
             .timestamp(parameters.getTimestamp())
-            .transactionData(parameters.getTransactionData().stream()
-                .map(m -> buildMeterValue(m))
-                .collect(Collectors.toList()))
+            .transactionData(transactionData)
             .build())
         .build();
   }
